@@ -6,6 +6,9 @@ using System.Web;
 
 namespace Menu_Permission
 {
+    /// <summary>
+    /// 枚举类型
+    /// </summary>
     public static class EnumType
     {
         /// <summary>

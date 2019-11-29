@@ -20,4 +20,14 @@
     </PackageReference>
   </ItemGroup>
 
+
+  <ItemGroup>
+    <ProjectReference Include="..\Menu_Permission\Menu_Permission.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="Data\TabModels\" />
+  </ItemGroup>
+
 </Project>

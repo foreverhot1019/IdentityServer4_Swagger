@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Menu_Permission;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,15 @@ namespace MyIdentityServer.Data
             : base(options)
         {
         }
+        #region 表
+
+        public DbSet<MenuItem> MenuItem { get; set; }
+
+        public DbSet<MenuAction> MenuAction { get; set; }
+
+        public DbSet<RoleMenu> RoleMenu { get; set; }
+
+        #endregion
 
         /// <summary>
         /// 
