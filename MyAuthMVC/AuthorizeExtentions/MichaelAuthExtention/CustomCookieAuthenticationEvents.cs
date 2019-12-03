@@ -30,24 +30,24 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 
         // Get an instance using DI
         var dbContext = _AppDbContext;// context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-        var user = await dbContext.Users.FindAsync(userId);
-        if (user == null)
-        {
+        //var user = await dbContext.Users.FindAsync(userId);
+        //if (user == null)
+        //{
             context.RejectPrincipal();
             return;
-        }
-        else
-        {
-            //修改过用户信息或者主动让账户过期（修改SecurityStamp）
-            var SecurityStamp = userPrincipal.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.AuthenticationInstant)?.Value;
+        //}
+        //else
+        //{
+        //    //修改过用户信息或者主动让账户过期（修改SecurityStamp）
+        //    var SecurityStamp = userPrincipal.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.AuthenticationInstant)?.Value;
             
-            if (user.SecurityStamp != SecurityStamp)
-            {
-                context.RejectPrincipal();
+        //    if (user.SecurityStamp != SecurityStamp)
+        //    {
+        //        context.RejectPrincipal();
 
-                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return;
-            }
-        }
+        //        await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        //        return;
+        //    }
+        //}
     }
 }

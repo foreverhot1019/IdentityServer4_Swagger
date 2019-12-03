@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -21,15 +22,27 @@ namespace MyIdentityServer
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
-                    webBuilder.UseKestrel(opts =>
-                    {
-                        opts.Listen(IPAddress.Any, 44365, ListenCon =>
-                        {
-                            ListenCon.UseHttps();
-                        });
-                        opts.Listen(IPAddress.Any, 53623);
-                    });
+                    string EnvName = "MichaelAuthServ";
+                    webBuilder.UseEnvironment(EnvName);
+                    //自定义配置文件
+                    IConfigurationRoot configuration = new ConfigurationBuilder()
+                      .SetBasePath(Directory.GetCurrentDirectory())
+                      .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                      .AddJsonFile($"appsettings.{EnvName}.json", optional: true).Build();
+
+                    int Port_ssl = configuration.GetValue<int>("WebHost:Port_ssl");
+                    int Port = configuration.GetValue<int>("WebHost:Port");
+
+                    //webBuilder.UseKestrel(opts => {
+                    //    opts.ListenAnyIP(Port_ssl, opts => {
+                    //        opts.UseHttps();
+                    //    });
+                    //    opts.ListenAnyIP(Port);
+                    //}).UseStartup<Startup>().UseUrls("http:localhost:{Port}");
+
+                    webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
+                    webBuilder.UseIISIntegration();
+                    webBuilder.UseStartup<Startup>().UseUrls($"http://localhost:{Port}");
                 });
     }
 }

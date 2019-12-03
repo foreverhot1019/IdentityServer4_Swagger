@@ -86,5 +86,10 @@ namespace MyAuthMVC
                 return Task.FromResult<AuthorizationPolicy>(AuthPolicy);
             }
         }
+
+        public Task<AuthorizationPolicy> GetFallbackPolicyAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

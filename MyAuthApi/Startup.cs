@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -13,6 +15,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MyAuthApi
 {
@@ -28,18 +32,21 @@ namespace MyAuthApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers(); // WebAPI
+            //services.AddControllersWithViews(); // MVC
+            //services.AddRazorPages(); // RazorPage
 
             //IdentityModelEventSource.ShowPII = true;//显示IdentityServer具体错误
+            //认证方式配置
             services.AddAuthentication(Configuration["IdentitySrvAuth:Scheme"])
-            .AddIdentityServerAuthentication(opts =>
+            .AddIdentityServerAuthentication(opts =>//IdentityServer认证方式配置
             {
                 opts.ApiName = "MichaelApi";
                 //opts.ApiName = Configuration["Service:Name"]; // match with configuration in IdentityServer
                 opts.RequireHttpsMetadata = false;// for dev env
                 opts.Authority = $"http://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port"]}";
-
-                opts.JwtValidationClockSkew = TimeSpan.FromSeconds(10);//认证过期时间间隔
+                //认证过期时间验证间隔时间
+                opts.JwtValidationClockSkew = TimeSpan.FromSeconds(10);
                 
                 opts.JwtBearerEvents = new JwtBearerEvents
                 {
@@ -63,6 +70,125 @@ namespace MyAuthApi
                             tkvldContext.Fail("认证失败");
                     }
                 };
+            })
+            .AddJwtBearer("MyJwtBearer",opts=> {
+                //认证过期时间间隔
+                opts.TokenValidationParameters.ClockSkew = TimeSpan.FromSeconds(10);
+                opts.Events = new JwtBearerEvents
+                {
+                    //验证token是否符合自定义规范
+                    OnTokenValidated = async tkvldContext =>
+                    {
+                        if (tkvldContext.Principal.Identity.IsAuthenticated)
+                        {
+                            var ArrClaim = tkvldContext.Principal.Claims;
+                            var exp = ArrClaim.Where(x => x.Type == "exp").FirstOrDefault()?.Value;
+                            long.TryParse(exp, out long longVal);
+                            var s = new DateTime(longVal);
+                            var SecurityStamp = ArrClaim.Where(x => x.Type == "AspNet.Identity.SecurityStamp").FirstOrDefault()?.Value;
+                            var Identifier = ArrClaim.Where(x => x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").FirstOrDefault()?.Value;
+
+                            //UserManager<IdentityUser> userManager = tkvldContext.HttpContext.RequestServices.GetRequiredService<UserManager<IdentityUser>>();
+                            //userManager.GetUserAsync(tkvldContext.Principal);
+                            //tkvldContext.Success();
+                        }
+                        else
+                            tkvldContext.Fail("认证失败");
+                    }
+                };
+            });
+            //授权配置
+            services.AddAuthorization(opts => {
+                var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+                    JwtBearerDefaults.AuthenticationScheme,
+                    "MyJwtBearer");
+                defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+                opts.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+            });
+
+            //swagger配置
+            services.AddSwaggerGen(SwaggerGenOpts =>
+            {
+                // resolve the IApiVersionDescriptionProvider service
+                // note: that we have to build a temporary service provider here because one has not been created yet
+                //var provider = services.BuildServiceProvider().GetRequiredService<IApiVersionDescriptionProvider>();
+                SwaggerGenOpts.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "V1.0.0",
+                    Title = "My Swagger Demo",
+                    Description = "webapi适配swagger",
+                    //TermsOfService = "None",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Michael-Swagger",
+                        Email = "Michael_Wang1019@feiliks.com",
+                        Url = new Uri("https://blog.csdn.net/foreverhot1019")
+                    }
+                });
+
+                // 为 Swagger JSON and UI设置xml文档注释路径
+                var basePath = Path.GetDirectoryName(typeof(Program).Assembly.Location);//获取应用程序所在目录（绝对，不受工作目录影响，建议采用此方法获取路径）
+                //添加接口XML的路径
+                var xmlPath = Path.Combine(basePath, "MyAuthApiSwagger.xml");
+                //如果需要显示控制器注释只需将第二个参数设置为true
+                SwaggerGenOpts.IncludeXmlComments(xmlPath, true);
+
+                #region Bearer Token认证
+
+                // Add security definitions-Swagger增加令牌获取
+                SwaggerGenOpts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Description = "Please enter into field the word 'Bearer' followed by a space and the JWT value",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                });
+                // 增加一个全局的安全必须
+                SwaggerGenOpts.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    { new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference()
+                        {
+                            Id = "Bearer",
+                            Type = ReferenceType.SecurityScheme
+                        }
+                    }, Array.Empty<string>() }
+                });
+
+                ////Swagger增加令牌获取
+                //SwaggerGenOpts.AddSecurityDefinition("oauth2", new OAuth2Scheme
+                //{
+                //    Flow = "implicit", // 只需通过浏览器获取令牌（适用于swagger）
+                //    AuthorizationUrl = "http://localhost:5000/connect/authorize",//获取登录授权接口
+                //    Scopes = new Dictionary<string, string> {
+                //        { "demo_api", "Demo API - full access" }//指定客户端请求的api作用域。 如果为空，则客户端无法访问
+                //    }
+                //});
+
+                //添加httpHeader参数
+                SwaggerGenOpts.OperationFilter<HttpHeaderOperation>();
+
+                #endregion
+
+                #region 多个Swagger https://www.cnblogs.com/weihanli/p/ues-swagger-in-aspnetcore3_0.html
+
+                //SwaggerGenOpts.SwaggerDoc("v1", new OpenApiInfo { Version = "v1", Title = "API V1" });
+                //SwaggerGenOpts.SwaggerDoc("v2", new OpenApiInfo { Version = "v2", Title = "API V2" });
+
+                //SwaggerGenOpts.DocInclusionPredicate((docName, apiDesc) =>
+                //{
+                //    var versions = apiDesc.CustomAttributes()
+                //        .OfType<ApiVersionAttribute>()
+                //        .SelectMany(attr => attr.Versions);
+
+                //    return versions.Any(v => $"v{v.ToString()}" == docName);
+                //});
+
+                //SwaggerGenOpts.OperationFilter<RemoveVersionParameterOperationFilter>();
+                //SwaggerGenOpts.DocumentFilter<SetVersionInPathDocumentFilter>();
+
+                #endregion
             });
         }
 
@@ -73,7 +199,7 @@ namespace MyAuthApi
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            //强制使用Https
             //app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -85,6 +211,19 @@ namespace MyAuthApi
             {
                 endpoints.MapControllers();
             });
+
+            #region Swagger配置
+
+            app.UseSwagger(opts =>
+            {
+                //opts.RouteTemplate = "swagger/{documentName}/swagger.json";
+            });
+            app.UseSwaggerUI(opts =>
+            {
+                opts.SwaggerEndpoint("/Swagger/v1/swagger.json", "ApiHelper V1");
+            });
+
+            #endregion
         }
     }
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +35,14 @@ namespace MyIdentityServer
 
             services.AddControllersWithViews();
             services.AddRazorPages();
+            //services.AddRazorPages(o => o.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model => { 
+            //    foreach (var selector in model.Selectors) 
+            //    { 
+            //        var attributeRouteModel = selector.AttributeRouteModel; 
+            //        attributeRouteModel.Order = -1; 
+            //        attributeRouteModel.Template = attributeRouteModel.Template.Remove(0, "Identity".Length); 
+            //    } 
+            //}));
 
             var DbContextConnStr = Configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
@@ -43,7 +50,9 @@ namespace MyIdentityServer
             services.AddDbContext<ApplicationDbContext>(options => {
                 options.UseSqlServer(DbContextConnStr, b => { b.MigrationsAssembly(migrationsAssembly); });
             });
-            services.AddIdentity<IdentityUser, IdentityRole>(IdentityOpts => {
+
+            services.AddIdentity<IdentityUser, IdentityRole>(IdentityOpts =>
+            {
                 // Password settings.
                 IdentityOpts.Password.RequireDigit = true;
                 IdentityOpts.Password.RequireLowercase = true;
@@ -75,10 +84,10 @@ namespace MyIdentityServer
             {
                 options.UserInteraction = new IdentityServer4.Configuration.UserInteractionOptions
                 {
-                    LoginUrl = "/Identity/Account/Login",//【必备】登录地址  
-                    LogoutUrl = "/Identity/Account/Logout",//【必备】退出地址 
-                    ConsentUrl = "/Identity/Account/Consent",//【必备】允许授权同意页面地址
-                    ErrorUrl = "/Identity/Account/Error", //【必备】错误页面地址
+                    LoginUrl = "/Account/Login",//【必备】登录地址  
+                    LogoutUrl = "/Account/Logout",//【必备】退出地址 
+                    ConsentUrl = "/Account/Consent",//【必备】允许授权同意页面地址
+                    ErrorUrl = "/Account/Error", //【必备】错误页面地址
                     LoginReturnUrlParameter = "ReturnUrl",//【必备】设置传递给登录页面的返回URL参数的名称。默认为returnUrl 
                     LogoutIdParameter = "logoutId", //【必备】设置传递给注销页面的注销消息ID参数的名称。缺省为logoutId 
                     ConsentReturnUrlParameter = "ReturnUrl", //【必备】设置传递给同意页面的返回URL参数的名称。默认为returnUrl
@@ -99,7 +108,6 @@ namespace MyIdentityServer
             //.AddInMemoryClients(InMemoryConfiguration.GetClients())
 
             #endregion
-            .AddAspNetIdentity<IdentityUser>()//增加支持Asp.Net.Identity账户
             .AddCustomTokenRequestValidator<MyCustomTokenRequestValidatorExt>()//自定义令牌请求认证
             .AddResourceOwnerValidator<ResourceOwnerPasswordExt>()//自定义资源所有者密码模式认证
             .AddProfileService<ProfileService>()//自定义 用户权限页信息
@@ -132,18 +140,17 @@ namespace MyIdentityServer
             })
             // this is something you will want in production to reduce load on and requests to the DB
             //.AddConfigurationStoreCache();
+            .AddAspNetIdentity<IdentityUser>()//增加支持Asp.Net.Identity账户
             ;
             //自定义 客户端资源密钥验证
             services.AddTransient<IClientSecretValidator, ClientSecretValidatorExt>();
             //自定义 Api资源密钥验证
             services.AddTransient<IApiSecretValidator, MyApiSecretValidatorExt>();
-
-            //已在AspNet.Identity中设置
-            //services.AddAuthentication("MyCookie")
-            //.AddCookie("MyCookie", options =>
-            //{
-            //    options.ExpireTimeSpan = TimeSpan.FromMinutes(300);
-            //});
+            //防止CSRF攻击
+            services.AddAntiforgery(opts => {
+                opts.HeaderName = "MichaelAntiforgery";
+                //opts.SuppressXFrameOptionsHeader
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -168,7 +175,7 @@ namespace MyIdentityServer
             app.UseStaticFiles();
 
             app.UseRouting();
-            //认证
+            //认证方式
             app.UseAuthentication();
             ////授权
             //app.UseAuthorization();// UseAuthentication not needed -- UseIdentityServer add this

@@ -100,9 +100,9 @@ namespace MyIdentityServer.IdentityServer
                     ClientName = "CAS MVC Web App Client",
                     AllowedGrantTypes = GrantTypes.Implicit,
                     //允许登录后重定向的地址列表，可以有多个
-                    RedirectUris = { $"http://{Configuration["Clients:MvcClient:IP"]}:{Configuration["Clients:MvcClient:Port"]}/signin-oidc" },
+                    RedirectUris = { $"http://localhost:53624/signin-oidc" },
                     //允许注销登录后重定向的地址列表，可以有多个
-                    PostLogoutRedirectUris = { $"http://{Configuration["Clients:MvcClient:IP"]}:{Configuration["Clients:MvcClient:Port"]}/signout-callback-oidc" },
+                    PostLogoutRedirectUris = { $"http://localhost:53624/signout-callback-oidc" },
                     AllowedScopes = new [] {
                         IdentityServerConstants.StandardScopes.OpenId,//必须有
                         IdentityServerConstants.StandardScopes.Profile,//必须有
@@ -125,10 +125,13 @@ namespace MyIdentityServer.IdentityServer
                     //客户端授权类型，Code:授权码模式
                     AllowedGrantTypes=GrantTypes.Code,
                     //允许登录后重定向的地址列表，可以有多个
-                    RedirectUris ={ $"http://{Configuration["Clients:MvcClient:IP"]}:{Configuration["Clients:MvcClient:Port"]}/signin-oidc" }, 
+                    RedirectUris ={ $"http://localhost:53624/signin-oidc" }, 
                     //允许访问的资源
                     AllowedScopes={
+                        IdentityServerConstants.StandardScopes.OpenId,//必须有
+                        IdentityServerConstants.StandardScopes.Profile,//必须有
                         "webapi",
+                        "clientservice",
                         "productservice"
                     },
                 },

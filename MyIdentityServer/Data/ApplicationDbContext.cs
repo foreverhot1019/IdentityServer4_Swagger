@@ -2,18 +2,22 @@
 using System.Collections.Generic;
 using System.Text;
 using Menu_Permission;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+//using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace MyIdentityServer.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext :DbContext//: IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
+
         #region 表
+
+        public DbSet<IdentityUser> Users { get; set; }
 
         public DbSet<MenuItem> MenuItem { get; set; }
 

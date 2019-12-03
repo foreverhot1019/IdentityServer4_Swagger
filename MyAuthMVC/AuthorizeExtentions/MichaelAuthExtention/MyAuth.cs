@@ -15,6 +15,7 @@ namespace MyAuthMVC.AuthorizeExtentions.MichaelAuthExtention
     public class MyAuth
     {
     }
+
     public class ApiKeyAuthOpts : AuthenticationSchemeOptions
     {
         public string AuthKey { get; set; }

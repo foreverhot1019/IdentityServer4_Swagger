@@ -8,8 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace MyAuthApi.Controllers
 {
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    //[Authorize]
     [ApiController]
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
@@ -26,6 +24,7 @@ namespace MyAuthApi.Controllers
             _logger = logger;
         }
 
+        [Authorize]
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
@@ -38,6 +37,15 @@ namespace MyAuthApi.Controllers
                 Summary = Summaries[rng.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [HttpPost]
+        public async Task<string> Post()
+        {
+            return await Task.Run(() => {
+                return "Bearer Auth Post Complete";
+            });
         }
     }
 }
