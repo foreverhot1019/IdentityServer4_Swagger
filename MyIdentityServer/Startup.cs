@@ -140,8 +140,8 @@ namespace MyIdentityServer
             })
             // this is something you will want in production to reduce load on and requests to the DB
             //.AddConfigurationStoreCache();
-            .AddAspNetIdentity<IdentityUser>()//增加支持Asp.Net.Identity账户
-            ;
+            .AddAspNetIdentity<IdentityUser>();//增加支持Asp.Net.Identity账户
+            
             //自定义 客户端资源密钥验证
             services.AddTransient<IClientSecretValidator, ClientSecretValidatorExt>();
             //自定义 Api资源密钥验证
@@ -171,7 +171,7 @@ namespace MyIdentityServer
             //InitializeDatabase(app);
 
             //强制使用Https
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();

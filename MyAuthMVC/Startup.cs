@@ -72,8 +72,8 @@ namespace MyAuthMVC
             .AddCookie("Cookies")
             .AddOpenIdConnect("oidc", options =>
             {
-                options.Authority = $"http://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port"]}";
-                options.RequireHttpsMetadata = false;
+                options.Authority = $"https://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port_ssl"]}";
+                options.RequireHttpsMetadata = true;
 
                 options.ClientId = "GrantCode";
                 options.ClientSecret = "CodeSecret";
@@ -82,6 +82,9 @@ namespace MyAuthMVC
                 options.SaveTokens = true;
 
                 options.Scope.Add("productservice");
+                //options.Events.OnTokenValidated =async tokenValidContext => {
+                //    var OUser = tokenValidContext.HttpContext.User;
+                //};
             });
         }
 
