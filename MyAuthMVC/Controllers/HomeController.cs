@@ -27,6 +27,7 @@ namespace MyAuthMVC.Controllers
 
         public IActionResult Privacy()
         {
+            var OIdentity = User.Identity;
             return View();
         }
 

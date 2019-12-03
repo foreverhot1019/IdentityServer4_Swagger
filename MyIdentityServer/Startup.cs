@@ -33,17 +33,6 @@ namespace MyIdentityServer
         {
             InMemoryConfiguration.Configuration = this.Configuration;
 
-            services.AddControllersWithViews();
-            services.AddRazorPages();
-            //services.AddRazorPages(o => o.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model => { 
-            //    foreach (var selector in model.Selectors) 
-            //    { 
-            //        var attributeRouteModel = selector.AttributeRouteModel; 
-            //        attributeRouteModel.Order = -1; 
-            //        attributeRouteModel.Template = attributeRouteModel.Template.Remove(0, "Identity".Length); 
-            //    } 
-            //}));
-
             var DbContextConnStr = Configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
 
@@ -75,6 +64,17 @@ namespace MyIdentityServer
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
+            services.AddControllersWithViews();
+            services.AddRazorPages();
+            //services.AddRazorPages(o => o.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model => { 
+            //    foreach (var selector in model.Selectors) 
+            //    { 
+            //        var attributeRouteModel = selector.AttributeRouteModel; 
+            //        attributeRouteModel.Order = -1; 
+            //        attributeRouteModel.Template = attributeRouteModel.Template.Remove(0, "Identity".Length); 
+            //    } 
+            //}));
+
             ////认证（请求带过来令牌时验证）
             //services.AddAuthentication();
             ////授权（访问Action时验证令牌包含的Claims的权限）
@@ -82,19 +82,19 @@ namespace MyIdentityServer
             //认证服务器
             services.AddIdentityServer(options =>
             {
-                options.UserInteraction = new IdentityServer4.Configuration.UserInteractionOptions
-                {
-                    LoginUrl = "/Account/Login",//【必备】登录地址  
-                    LogoutUrl = "/Account/Logout",//【必备】退出地址 
-                    ConsentUrl = "/Account/Consent",//【必备】允许授权同意页面地址
-                    ErrorUrl = "/Account/Error", //【必备】错误页面地址
-                    LoginReturnUrlParameter = "ReturnUrl",//【必备】设置传递给登录页面的返回URL参数的名称。默认为returnUrl 
-                    LogoutIdParameter = "logoutId", //【必备】设置传递给注销页面的注销消息ID参数的名称。缺省为logoutId 
-                    ConsentReturnUrlParameter = "ReturnUrl", //【必备】设置传递给同意页面的返回URL参数的名称。默认为returnUrl
-                    ErrorIdParameter = "errorId", //【必备】设置传递给错误页面的错误消息ID参数的名称。缺省为errorId
-                    CustomRedirectReturnUrlParameter = "ReturnUrl", //【必备】设置从授权端点传递给自定义重定向的返回URL参数的名称。默认为returnUrl
-                    CookieMessageThreshold = 5, //【必备】由于浏览器对Cookie的大小有限制，设置Cookies数量的限制，有效的保证了浏览器打开多个选项卡，一旦超出了Cookies限制就会清除以前的Cookies值
-                };
+                //options.UserInteraction = new IdentityServer4.Configuration.UserInteractionOptions
+                //{
+                //    LoginUrl = "/Account/Login",//【必备】登录地址  
+                //    LogoutUrl = "/Account/Logout",//【必备】退出地址 
+                //    ConsentUrl = "/Account/Consent",//【必备】允许授权同意页面地址
+                //    ErrorUrl = "/Account/Error", //【必备】错误页面地址
+                //    LoginReturnUrlParameter = "ReturnUrl",//【必备】设置传递给登录页面的返回URL参数的名称。默认为returnUrl 
+                //    LogoutIdParameter = "logoutId", //【必备】设置传递给注销页面的注销消息ID参数的名称。缺省为logoutId 
+                //    ConsentReturnUrlParameter = "ReturnUrl", //【必备】设置传递给同意页面的返回URL参数的名称。默认为returnUrl
+                //    ErrorIdParameter = "errorId", //【必备】设置传递给错误页面的错误消息ID参数的名称。缺省为errorId
+                //    CustomRedirectReturnUrlParameter = "ReturnUrl", //【必备】设置从授权端点传递给自定义重定向的返回URL参数的名称。默认为returnUrl
+                //    CookieMessageThreshold = 5, //【必备】由于浏览器对Cookie的大小有限制，设置Cookies数量的限制，有效的保证了浏览器打开多个选项卡，一旦超出了Cookies限制就会清除以前的Cookies值
+                //};
             })
             .AddDeveloperSigningCredential(filename: "tempkey.rsa")//开发环境证书
             //自定义证书
@@ -175,11 +175,12 @@ namespace MyIdentityServer
             app.UseStaticFiles();
 
             app.UseRouting();
+
             //认证方式
-            app.UseAuthentication();
-            ////授权
-            //app.UseAuthorization();// UseAuthentication not needed -- UseIdentityServer add this
+            //app.UseAuthentication();// UseAuthentication not needed -- UseIdentityServer add this
             app.UseIdentityServer();
+            //授权
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

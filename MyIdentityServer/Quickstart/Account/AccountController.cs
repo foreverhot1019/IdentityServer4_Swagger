@@ -35,7 +35,7 @@ namespace IdentityServer
         private readonly TestUserStore _users;
         ApplicationDbContext _applicationDb;
         //private readonly UserManager<IdentityUser> _userManager;
-        //private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IIdentityServerInteractionService _interaction;
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
@@ -47,7 +47,7 @@ namespace IdentityServer
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
              //UserManager<IdentityUser> userManager,
-             //SignInManager<IdentityUser> signInManager,
+             SignInManager<IdentityUser> signInManager,
              ApplicationDbContext applicationDb,
         TestUserStore users = null)
         {
@@ -55,7 +55,7 @@ namespace IdentityServer
             // this is where you would plug in your own custom identity management library (e.g. ASP.NET Identity)
             _users = users ?? new TestUserStore(TestUsers.Users);
             //_userManager = userManager;
-            //_signInManager = signInManager;
+            _signInManager = signInManager;
             _applicationDb = applicationDb;
 
             _interaction = interaction;
@@ -121,30 +121,31 @@ namespace IdentityServer
 
             if (ModelState.IsValid)
             {
-                var OUser = _applicationDb.Users.Where(x => x.UserName == model.Username).FirstOrDefault();
-                //var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, true, true);
+                //var OUser = _applicationDb.Users.Where(x => x.UserName == model.Username).FirstOrDefault();
+                var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, true, true);
                 //var OUser = await _userManager.FindByNameAsync(model.Username);
                 //var Success = await _userManager.CheckPasswordAsync(OUser, model.Password);
                 // validate username/password against in-memory store
-                if (User!=null)
+                if (result.Succeeded)
                 {
+                    var OUser = await _signInManager.UserManager.FindByNameAsync(model.Username);
                     await _events.RaiseAsync(new UserLoginSuccessEvent(OUser.UserName, OUser.Id, OUser.UserName, clientId: context?.ClientId));
 
                     // only set explicit expiration here if user chooses "remember me". 
                     // otherwise we rely upon expiration configured in cookie middleware.
-                    AuthenticationProperties props = null;
-                    if (AccountOptions.AllowRememberLogin && model.RememberLogin)
-                    {
-                        props = new AuthenticationProperties
-                        {
-                            IsPersistent = true,
-                            ExpiresUtc = DateTimeOffset.UtcNow.Add(AccountOptions.RememberMeLoginDuration)
-                        };
-                    };
+                    //AuthenticationProperties props = null;
+                    //if (AccountOptions.AllowRememberLogin && model.RememberLogin)
+                    //{
+                    //    props = new AuthenticationProperties
+                    //    {
+                    //        IsPersistent = true,
+                    //        ExpiresUtc = DateTimeOffset.UtcNow.Add(AccountOptions.RememberMeLoginDuration)
+                    //    };
+                    //};
                     //var userPrincipal = await _signInManager.CreateUserPrincipalAsync(OUser);
                     // issue authentication cookie with subject ID and username
                     //await HttpContext.SignInAsync(userPrincipal, props);
-                    await HttpContext.SignInAsync(OUser.Id, OUser.UserName, props);
+                    //await HttpContext.SignInAsync(OUser.Id, OUser.UserName, props);
 
                     if (context != null)
                     {
