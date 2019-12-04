@@ -40,7 +40,7 @@ namespace MyIdentityServer
                             opts.UseHttps();
                         });
                         opts.ListenAnyIP(Port);
-                    }).UseStartup<Startup>().UseUrls("http:localhost:{Port}");
+                    }).UseStartup<Startup>().UseUrls($"http://localhost:{Port},https://localhost:{Port_ssl}");
 
                     //webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
                     //webBuilder.UseIISIntegration();

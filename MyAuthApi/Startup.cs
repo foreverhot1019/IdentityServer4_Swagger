@@ -44,7 +44,7 @@ namespace MyAuthApi
                 opts.ApiName = "MichaelApi";
                 //opts.ApiName = Configuration["Service:Name"]; // match with configuration in IdentityServer
                 opts.RequireHttpsMetadata = false;// for dev env
-                opts.Authority = $"http://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port"]}";
+                opts.Authority = $"https://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port_ssl"]}";
                 //认证过期时间验证间隔时间
                 opts.JwtValidationClockSkew = TimeSpan.FromSeconds(10);
                 
