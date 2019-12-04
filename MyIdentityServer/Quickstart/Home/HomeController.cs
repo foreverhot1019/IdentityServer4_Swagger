@@ -10,9 +10,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
-namespace IdentityServer
+namespace IdentityServer4.Quickstart.UI
 {
-    //[Route("Identity")]
     [SecurityHeaders]
     [AllowAnonymous]
     public class HomeController : Controller
@@ -53,11 +52,11 @@ namespace IdentityServer
             {
                 vm.Error = message;
 
-                if (!_environment.IsDevelopment())
-                {
-                    // only show in development
-                    message.ErrorDescription = null;
-                }
+                //if (!_environment.IsDevelopment())
+                //{
+                //    // only show in development
+                //    message.ErrorDescription = null;
+                //}
             }
 
             return View("Error", vm);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -52,5 +53,11 @@ namespace Menu_Permission
 
         [Display(Name = "子菜单", Description = "子菜单")]
         public ICollection<MenuItem> SubMenus { get; set; }
+
+
+        [Display(Name = "所属资源", Description = "")]
+        [Required, StringLength(50), DefaultValue("-")]
+        public string Resource { get; set; } = "-";
+
     }
 }

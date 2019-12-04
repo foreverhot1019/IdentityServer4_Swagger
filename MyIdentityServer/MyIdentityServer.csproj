@@ -5,6 +5,11 @@
     <UserSecretsId>aspnet-MyIdentityServer-68649070-5663-422D-B2A8-75B9085C6E92</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Data\Migrations\20191204003811_ChgIdentityUser.cs" />
+    <Compile Remove="Data\Migrations\20191204003811_ChgIdentityUser.Designer.cs" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="IdentityServer4" Version="3.0.2" />
@@ -28,7 +33,6 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
-    <Folder Include="Data\TabModels\" />
   </ItemGroup>
 
 </Project>

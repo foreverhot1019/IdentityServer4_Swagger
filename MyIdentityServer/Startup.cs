@@ -16,6 +16,7 @@ using IdentityServer4.Validation;
 using System.Reflection;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
+using MyIdentityServer.Models;
 
 namespace MyIdentityServer
 {
@@ -40,7 +41,7 @@ namespace MyIdentityServer
                 options.UseSqlServer(DbContextConnStr, b => { b.MigrationsAssembly(migrationsAssembly); });
             });
 
-            services.AddIdentity<IdentityUser, IdentityRole>(IdentityOpts =>
+            services.AddIdentity<ApplicationUser, IdentityRole>(IdentityOpts =>
             {
                 // Password settings.
                 IdentityOpts.Password.RequireDigit = true;
@@ -60,7 +61,7 @@ namespace MyIdentityServer
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
                 IdentityOpts.User.RequireUniqueEmail = false;
             })
-            .AddClaimsPrincipalFactory<UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>()//添加凭证支持IdentityRole到Claim
+            .AddClaimsPrincipalFactory<UserClaimsPrincipalFactory<ApplicationUser, IdentityRole>>()//添加凭证支持IdentityRole到Claim
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
@@ -140,8 +141,8 @@ namespace MyIdentityServer
             })
             // this is something you will want in production to reduce load on and requests to the DB
             //.AddConfigurationStoreCache();
-            .AddAspNetIdentity<IdentityUser>();//增加支持Asp.Net.Identity账户
-            
+            .AddAspNetIdentity<ApplicationUser>();//增加支持Asp.Net.IdentityUser账户
+
             //自定义 客户端资源密钥验证
             services.AddTransient<IClientSecretValidator, ClientSecretValidatorExt>();
             //自定义 Api资源密钥验证

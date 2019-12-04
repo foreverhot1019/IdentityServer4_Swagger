@@ -110,6 +110,7 @@ namespace MyIdentityServer.IdentityServer
                     },
                     AccessTokenLifetime = 60, ////令牌过期时间（默认3600秒）
                     AllowAccessTokensViaBrowser = true, // can return access_token to this client
+                    AlwaysIncludeUserClaimsInIdToken = true,//id_token&access_token 显示claims到客户端而不是需要访问IdentityServer服务端的userinfo
                 },
                 /*
                  * 授权码模式:
@@ -134,6 +135,7 @@ namespace MyIdentityServer.IdentityServer
                         "clientservice",
                         "productservice"
                     },
+                    AlwaysIncludeUserClaimsInIdToken = true,//id_token&access_token 显示claims到客户端而不是需要访问IdentityServer服务端的userinfo
                 },
             };
         }

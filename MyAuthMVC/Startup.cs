@@ -75,9 +75,13 @@ namespace MyAuthMVC
                 options.Authority = $"https://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port_ssl"]}";
                 options.RequireHttpsMetadata = true;
 
-                options.ClientId = "GrantCode";
-                options.ClientSecret = "CodeSecret";
-                options.ResponseType = "code";
+                //options.ClientId = "GrantCode";
+                //options.ClientSecret = "CodeSecret";
+                //options.ResponseType = "code";
+
+                options.ClientId = "cas.mvc.client.implicit";
+                //options.ClientSecret = "";
+                options.ResponseType = "id_token token";
 
                 options.SaveTokens = true;
 

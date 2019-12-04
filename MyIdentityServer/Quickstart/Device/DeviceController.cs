@@ -14,9 +14,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace IdentityServer.Device
+namespace IdentityServer4.Quickstart.UI.Device
 {
-    //[Route("Identity")]
     [Authorize]
     [SecurityHeaders]
     public class DeviceController : Controller
