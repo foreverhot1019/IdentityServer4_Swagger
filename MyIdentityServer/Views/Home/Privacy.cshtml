@@ -4,13 +4,3 @@
 <h1>@ViewData["Title"]</h1>
 
 <p>Use this page to detail your site's privacy policy.</p>
-@if (User.Identity.IsAuthenticated)
-{
-    foreach(var item in User.Identities)
-    {
-        foreach(var claim in item.Claims)
-        {
-            <p>@($"{claim.Type}-{claim.Value}")</p>
-        }
-    }
-}
