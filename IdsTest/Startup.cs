@@ -42,6 +42,7 @@ namespace IdsTest
 
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
+                // this adds the config data from DB (clients, resources, CORS)
                 .AddConfigurationStore(options =>
                 {
                     options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
@@ -66,6 +67,7 @@ namespace IdsTest
                     options.EnableTokenCleanup = true;
                     options.TokenCleanupInterval = 30; // interval in seconds, short for testing
                 })
+                .AddResourceOwnerValidator<ResourceOwnerPasswordExt>()
                 .AddAspNetIdentity<ApplicationUser>();
         }
 

@@ -17,6 +17,8 @@ using System.Reflection;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using MyIdentityServer.Models;
+using IdentityServer4.Services;
+using IdentityServer4.AspNetIdentity;
 
 namespace MyIdentityServer
 {
@@ -61,9 +63,11 @@ namespace MyIdentityServer
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
                 IdentityOpts.User.RequireUniqueEmail = false;
             })
-            .AddClaimsPrincipalFactory<UserClaimsPrincipalFactory<ApplicationUser, IdentityRole>>()//添加凭证支持IdentityRole到Claim
+            .AddClaimsPrincipalFactory<CustomUserClaimsFactory<IdentityRole>>()//添加凭证支持IdentityRole到Claim
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
+
+            //services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, CustomUserClaimsFactory<IdentityRole>>();
 
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -80,22 +84,25 @@ namespace MyIdentityServer
             //services.AddAuthentication();
             ////授权（访问Action时验证令牌包含的Claims的权限）
             //services.AddAuthorization();
+
+
             //认证服务器
+            //http://localhost:5000/.well-known/openid-configuration
             services.AddIdentityServer(options =>
             {
-                //options.UserInteraction = new IdentityServer4.Configuration.UserInteractionOptions
-                //{
-                //    LoginUrl = "/Account/Login",//【必备】登录地址  
-                //    LogoutUrl = "/Account/Logout",//【必备】退出地址 
-                //    ConsentUrl = "/Account/Consent",//【必备】允许授权同意页面地址
-                //    ErrorUrl = "/Account/Error", //【必备】错误页面地址
-                //    LoginReturnUrlParameter = "ReturnUrl",//【必备】设置传递给登录页面的返回URL参数的名称。默认为returnUrl 
-                //    LogoutIdParameter = "logoutId", //【必备】设置传递给注销页面的注销消息ID参数的名称。缺省为logoutId 
-                //    ConsentReturnUrlParameter = "ReturnUrl", //【必备】设置传递给同意页面的返回URL参数的名称。默认为returnUrl
-                //    ErrorIdParameter = "errorId", //【必备】设置传递给错误页面的错误消息ID参数的名称。缺省为errorId
-                //    CustomRedirectReturnUrlParameter = "ReturnUrl", //【必备】设置从授权端点传递给自定义重定向的返回URL参数的名称。默认为returnUrl
-                //    CookieMessageThreshold = 5, //【必备】由于浏览器对Cookie的大小有限制，设置Cookies数量的限制，有效的保证了浏览器打开多个选项卡，一旦超出了Cookies限制就会清除以前的Cookies值
-                //};
+                options.UserInteraction = new IdentityServer4.Configuration.UserInteractionOptions
+                {
+                    LoginUrl = "/Account/Login",//【必备】登录地址  
+                    LogoutUrl = "/Account/Logout",//【必备】退出地址 
+                    //ConsentUrl = "/Consent",//【必备】允许授权同意页面地址
+                    //ErrorUrl = "/Account/Error", //【必备】错误页面地址
+                    LoginReturnUrlParameter = "ReturnUrl",//【必备】设置传递给登录页面的返回URL参数的名称。默认为returnUrl 
+                    LogoutIdParameter = "logoutId", //【必备】设置传递给注销页面的注销消息ID参数的名称。缺省为logoutId 
+                    ConsentReturnUrlParameter = "ReturnUrl", //【必备】设置传递给同意页面的返回URL参数的名称。默认为returnUrl
+                    ErrorIdParameter = "errorId", //【必备】设置传递给错误页面的错误消息ID参数的名称。缺省为errorId
+                    CustomRedirectReturnUrlParameter = "ReturnUrl", //【必备】设置从授权端点传递给自定义重定向的返回URL参数的名称。默认为returnUrl
+                    CookieMessageThreshold = 5, //【必备】由于浏览器对Cookie的大小有限制，设置Cookies数量的限制，有效的保证了浏览器打开多个选项卡，一旦超出了Cookies限制就会清除以前的Cookies值
+                };
             })
             .AddDeveloperSigningCredential(filename: "tempkey.rsa")//开发环境证书
             //自定义证书
@@ -104,49 +111,54 @@ namespace MyIdentityServer
             //    Configuration["Certificates:Password"]))
             #region 已扩展到数据库中可动态管理（AddConfigurationStore）
 
-            //.AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
-            //.AddInMemoryApiResources(InMemoryConfiguration.GetApiResources())
-            //.AddInMemoryClients(InMemoryConfiguration.GetClients())
+            .AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
+            .AddInMemoryApiResources(InMemoryConfiguration.GetApiResources())
+            .AddInMemoryClients(InMemoryConfiguration.GetClients())
 
             #endregion
-            .AddCustomTokenRequestValidator<MyCustomTokenRequestValidatorExt>()//自定义令牌请求认证
-            .AddResourceOwnerValidator<ResourceOwnerPasswordExt>()//自定义资源所有者密码模式认证
-            .AddProfileService<ProfileService>()//自定义 用户权限页信息
-            .AddExtensionGrantValidator<MyGrantTypeValidator>()//自定义GrantType
-            //.AddClientStore<MyClientStore>()//自定义客户端库
-            // this adds the config data from DB (clients, resources, CORS)
-            .AddConfigurationStore(options =>
-            {
-                options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
-                {
-                    //MigrationsAssembly程序集必须设置一致
-                    //dotnet ef migrations add InitConfigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/Configuration
-                    opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
-                });
-                options.DefaultSchema = "";
-            })
-            // this adds the operational data from DB (codes, tokens, consents)
-            .AddOperationalStore(options =>
-            {
-                options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
-                {
-                    //MigrationsAssembly程序集必须设置一致
-                    //dotnet ef migrations add InitPersistedGrant -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrant
-                    opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
-                });
-                options.DefaultSchema = "";
-                // this enables automatic token cleanup. this is optional.
-                options.EnableTokenCleanup = true;
-                options.TokenCleanupInterval = 30; // interval in seconds, short for testing
-            })
+            //// this adds the config data from DB (clients, resources, CORS)
+            //.AddConfigurationStore(options =>
+            //{
+            //    options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
+            //    {
+            //        //MigrationsAssembly程序集必须设置一致
+            //        //dotnet ef migrations add InitConfigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/Configuration
+            //        opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
+            //    });
+            //    options.DefaultSchema = "";
+            //})
+            //// this adds the operational data from DB (codes, tokens, consents)
+            //.AddOperationalStore(options =>
+            //{
+            //    options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
+            //    {
+            //        //MigrationsAssembly程序集必须设置一致
+            //        //dotnet ef migrations add InitPersistedGrant -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrant
+            //        opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
+            //    });
+            //    options.DefaultSchema = "";
+            //    // this enables automatic token cleanup. this is optional.
+            //    options.EnableTokenCleanup = true;
+            //    options.TokenCleanupInterval = 30; // interval in seconds, short for testing
+            //})
+            //.AddProfileService<MyProfileServices>()//自定义 用户权限页信息 这样无效 必须replace掉 Services中服务
+            //.AddResourceOwnerValidator<ResourceOwnerPasswordExt>()//自定义资源所有者密码模式认证
+            //.AddExtensionGrantValidator<MyGrantTypeValidator>()//自定义GrantType
+            //.AddCustomTokenRequestValidator<MyCustomTokenRequestValidatorExt>()//自定义令牌请求认证
+            .AddAspNetIdentity<ApplicationUser>()
+            //.AddClientStore<MyClientStore>()//自定义客户端库;//增加支持Asp.Net.IdentityUser账户
             // this is something you will want in production to reduce load on and requests to the DB
             //.AddConfigurationStoreCache();
-            .AddAspNetIdentity<ApplicationUser>();//增加支持Asp.Net.IdentityUser账户
+            ;
 
-            //自定义 客户端资源密钥验证
-            services.AddTransient<IClientSecretValidator, ClientSecretValidatorExt>();
-            //自定义 Api资源密钥验证
-            services.AddTransient<IApiSecretValidator, MyApiSecretValidatorExt>();
+            ////自定义 客户端资源密钥验证
+            //services.AddTransient<IClientSecretValidator, ClientSecretValidatorExt>();
+            ////自定义 Api资源密钥验证
+            //services.AddTransient<IApiSecretValidator, MyApiSecretValidatorExt>();
+
+            services.AddTransient<IProfileService, MyProfileServices>();
+            services.AddTransient<IResourceOwnerPasswordValidator, ResourceOwnerPasswordExt>();
+
             //防止CSRF攻击
             services.AddAntiforgery(opts => {
                 opts.HeaderName = "MichaelAntiforgery";
@@ -172,7 +184,7 @@ namespace MyIdentityServer
             //InitializeDatabase(app);
 
             //强制使用Https
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();

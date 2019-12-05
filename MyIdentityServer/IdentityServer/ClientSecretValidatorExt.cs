@@ -4,7 +4,9 @@ using IdentityServer4.Services;
 using IdentityServer4.Stores;
 using IdentityServer4.Validation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using MyIdentityServer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +53,7 @@ namespace MyIdentityServer.IdentityServer
         /// <returns></returns>
         public async Task<ClientSecretValidationResult> ValidateAsync(HttpContext context)
         {
-            //var _userManager = (UserManager<IdentityUser>)context.RequestServices.GetService(typeof(UserManager<IdentityUser>));
+            var _signInManager = (SignInManager<ApplicationUser>)context.RequestServices.GetService(typeof(SignInManager<ApplicationUser>));
             _logger.LogDebug("Start client validation");
             //错误返回
             var fail = new ClientSecretValidationResult
@@ -97,7 +99,8 @@ namespace MyIdentityServer.IdentityServer
             }
 
             _logger.LogDebug("Client validation success");
-
+            //var user = await _signInManager.UserManager.FindByNameAsync(context.User.Identity.Name);
+            //var  claimsPrincipal = await _signInManager.ClaimsFactory.CreateAsync(user);
             var success = new ClientSecretValidationResult
             {
                 IsError = false,

@@ -110,6 +110,18 @@ namespace IdentityServer4.Quickstart.UI
                     var user = await _userManager.FindByNameAsync(model.Username);
                     await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.ClientId));
 
+                    AuthenticationProperties props = null;
+                    if (AccountOptions.AllowRememberLogin && model.RememberLogin)
+                    {
+                        props = new AuthenticationProperties
+                        {
+                            IsPersistent = true,
+                            ExpiresUtc = DateTimeOffset.UtcNow.Add(AccountOptions.RememberMeLoginDuration)
+                        };
+                    };
+                    var claimsPrincipal = await _signInManager.ClaimsFactory.CreateAsync(user);
+                    var userClaims = claimsPrincipal.Claims;
+                    await HttpContext.SignInAsync(user.Id, user.UserName, props, userClaims.ToArray());
                     if (context != null)
                     {
                         if (await _clientStore.IsPkceClientAsync(context.ClientId))

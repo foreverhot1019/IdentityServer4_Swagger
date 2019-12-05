@@ -60,7 +60,12 @@ namespace MyIdentityServer.IdentityServer
                     ClientId = "client.api.service",
                     ClientSecrets = new [] { new Secret("clientsecret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
-                    AllowedScopes = new [] { "MichaelApi" },
+                    AllowedScopes = new [] {
+                        IdentityServerConstants.StandardScopes.Profile,//必须有
+                        "MichaelApi" },
+                    AlwaysSendClientClaims = true,
+                    AllowAccessTokensViaBrowser = true,
+                    AllowOfflineAccess =true,
                     //RefreshTokenUsage = TokenUsage.ReUse,//RefreshToken 使用模式 1次或重复使用
                     AccessTokenLifetime = 30,//令牌过期时间（秒）
                     //IdentityTokenLifetime=10,//身份令牌过期时间
@@ -71,7 +76,9 @@ namespace MyIdentityServer.IdentityServer
                     ClientId = "product.api.service",
                     ClientSecrets = new [] { new Secret("productsecret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ClientCredentials,//可以多个GrantType-GrantTypes.ResourceOwnerPasswordAndClientCredentials
-                    AllowedScopes = new [] { "clientservice", "productservice" },
+                    AllowedScopes = new [] {
+                        IdentityServerConstants.StandardScopes.Profile,//必须有
+                        "clientservice", "productservice" },
                     AlwaysSendClientClaims = true,
                     AccessTokenLifetime = 30,//令牌过期时间（秒）
                     Claims = new Claim[]{ //默认带的Claims
@@ -86,6 +93,7 @@ namespace MyIdentityServer.IdentityServer
                     AllowedGrantTypes = (new string[]{ "MyGrantType"}).Concat(GrantTypes.ClientCredentials).ToList(),
                     AllowedScopes = new [] { "agentservice", "clientservice", "productservice" },
                     AccessTokenLifetime = 30,//令牌过期时间（秒）
+                    AlwaysSendClientClaims = true,
                     Claims = new Claim[]{//默认带的Claims
                         new Claim(type:ClaimTypes.Role, value:"ApiRole_agent", valueType:"IdsApiRole")
                     }
@@ -100,7 +108,7 @@ namespace MyIdentityServer.IdentityServer
                     ClientName = "CAS MVC Web App Client",
                     AllowedGrantTypes = GrantTypes.Implicit,
                     //允许登录后重定向的地址列表，可以有多个
-                    RedirectUris = { $"http://localhost:53624/signin-oidc" },
+                    RedirectUris = new string[]{"http://localhost:53624/signin-oidc","https://localhost:44366/signin-oidc" },
                     //允许注销登录后重定向的地址列表，可以有多个
                     PostLogoutRedirectUris = { $"http://localhost:53624/signout-callback-oidc" },
                     AllowedScopes = new [] {
@@ -126,7 +134,7 @@ namespace MyIdentityServer.IdentityServer
                     //客户端授权类型，Code:授权码模式
                     AllowedGrantTypes=GrantTypes.Code,
                     //允许登录后重定向的地址列表，可以有多个
-                    RedirectUris ={ $"http://localhost:53624/signin-oidc" }, 
+                    RedirectUris = new string[]{"http://localhost:53624/signin-oidc","https://localhost:44366/signin-oidc" },
                     //允许访问的资源
                     AllowedScopes={
                         IdentityServerConstants.StandardScopes.OpenId,//必须有

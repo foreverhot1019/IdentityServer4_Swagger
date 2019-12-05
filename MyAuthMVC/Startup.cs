@@ -84,7 +84,16 @@ namespace MyAuthMVC
                 options.ResponseType = "id_token token";
 
                 options.SaveTokens = true;
+                //设置从UserInfoEndpoint获取claims信息
+                options.GetClaimsFromUserInfoEndpoint = true;
+                ////获取后映射到claims
+                //options.ClaimActions.MapJsonKey("sub", "sub");
+                //options.ClaimActions.MapJsonKey("preferred_username", "preferred_username");
+                //options.ClaimActions.MapJsonKey("avatar", "avatar");
+                //options.ClaimActions.MapCustomJson("role", job => job["role"].ToString());
 
+                //options.Scope.Add("openid");
+                //options.Scope.Add("profile");
                 options.Scope.Add("productservice");
                 //options.Events.OnTokenValidated =async tokenValidContext => {
                 //    var OUser = tokenValidContext.HttpContext.User;
@@ -106,7 +115,7 @@ namespace MyAuthMVC
                 app.UseHsts();
             }
             //强制使用Https
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();

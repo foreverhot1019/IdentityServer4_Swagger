@@ -32,7 +32,7 @@ namespace MyIdentityServer
 
                     int Port_ssl = configuration.GetValue<int>("WebHost:Port_ssl");
                     int Port = configuration.GetValue<int>("WebHost:Port");
-                    //必须时https 不然IdentityServer4 会报User is not Authorized
+                    //必须是https 不然IdentityServer4 会报User is not Authorized
                     webBuilder.UseKestrel(opts =>
                     {
                         opts.ListenAnyIP(Port_ssl, opts =>
@@ -44,7 +44,7 @@ namespace MyIdentityServer
 
                     //webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
                     //webBuilder.UseIISIntegration();
-                    //webBuilder.UseStartup<Startup>().UseUrls($"http://localhost:{Port}");
+                    //webBuilder.UseStartup<Startup>().UseUrls($"http://localhost:{Port},https://localhost:{Port_ssl}");
                 });
     }
 }

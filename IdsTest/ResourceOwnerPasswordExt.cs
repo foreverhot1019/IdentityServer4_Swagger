@@ -1,29 +1,22 @@
-﻿using AutoMapper;
-using IdentityModel;
+﻿using IdentityModel;
 using IdentityServer4.AspNetIdentity;
-using IdentityServer4.Events;
-using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
-using IdentityServer4.Stores;
 using IdentityServer4.Validation;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
+using IdsTest.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using MyIdentityServer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace MyIdentityServer.IdentityServer
+namespace IdsTest
 {
     /// <summary>
     /// 自定义用户登录校验
     /// </summary>
-    public class ResourceOwnerPasswordExt : IResourceOwnerPasswordValidator//ResourceOwnerPasswordValidator<ApplicationUser>//
+    public class ResourceOwnerPasswordExt : ResourceOwnerPasswordValidator<ApplicationUser>//IResourceOwnerPasswordValidator//
     {
         private RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -37,7 +30,7 @@ namespace MyIdentityServer.IdentityServer
             SignInManager<ApplicationUser> signInManager,
             IEventService events,
             ILogger<ResourceOwnerPasswordExt> logger)
-        //: base(userManager, signInManager, events, logger)
+        : base(userManager, signInManager, events, logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
@@ -61,7 +54,7 @@ namespace MyIdentityServer.IdentityServer
             if (VfyResult.Succeeded)
             {
                 context.Result = new GrantValidationResult(
-                    subject: OUser.Id,
+                    subject: context.UserName,
                     authenticationMethod: "custom",
                     claims: (await _signInManager.CreateUserPrincipalAsync(OUser)).Claims);
 
@@ -95,7 +88,4 @@ namespace MyIdentityServer.IdentityServer
             }
         }
     }
-
-
-    
 }

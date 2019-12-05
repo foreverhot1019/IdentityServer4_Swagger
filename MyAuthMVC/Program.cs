@@ -32,16 +32,20 @@ namespace MyAuthMVC
                     int Port_ssl = configuration.GetValue<int>("WebHost:Port_ssl");
                     int Port = configuration.GetValue<int>("WebHost:Port");
 
-                    //webBuilder.UseKestrel(opts => {
-                    //    opts.ListenAnyIP(Port_ssl, opts => {
-                    //        opts.UseHttps();
-                    //    });
-                    //    opts.ListenAnyIP(Port);
-                    //}).UseStartup<Startup>().UseUrls("http:localhost:{Port}");
+                    webBuilder.UseKestrel(opts =>
+                    {
+                        opts.ListenAnyIP(Port_ssl, opts =>
+                        {
+                            opts.UseHttps();
+                        });
+                        opts.ListenAnyIP(Port);
+                    });
 
-                    webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
-                    webBuilder.UseIISIntegration();
-                    webBuilder.UseStartup<Startup>().UseUrls($"http://localhost:{Port}");
+                    //webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
+                    //webBuilder.UseIISIntegration();
+
+                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls($"http://localhost:{Port},http://localhost:{Port_ssl}");
                 });
     }
 }

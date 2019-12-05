@@ -1,6 +1,26 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Authentication
+@{
     ViewData["Title"] = "Privacy Policy";
 }
 <h1>@ViewData["Title"]</h1>
 
 <p>Use this page to detail your site's privacy policy.</p>
+@if (User.Identity.IsAuthenticated)
+{
+    <span>id_Token:</span>
+    <br />
+    @await ViewContext.HttpContext.GetTokenAsync("id_token");
+    <br />
+    <span>access_Token:</span>
+    <br />
+    @await ViewContext.HttpContext.GetTokenAsync("access_token");
+    <br />
+    <span>Claims:</span>
+    <br />
+    @foreach (var claim in User.Claims)
+    {
+        <span>@claim.Type:</span>
+        <span>@claim.Value</span><br />
+    }
+    <br />
+}
