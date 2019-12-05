@@ -75,26 +75,37 @@ namespace MyAuthMVC
                 options.Authority = $"https://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port_ssl"]}";
                 options.RequireHttpsMetadata = true;
 
-                //options.ClientId = "GrantCode";
-                //options.ClientSecret = "CodeSecret";
-                //options.ResponseType = "code";
+                options.ClientId = "GrantCode";
+                options.ClientSecret = "CodeSecret";
+                options.ResponseType = "code";
 
-                options.ClientId = "cas.mvc.client.implicit";
-                //options.ClientSecret = "";
-                options.ResponseType = "id_token token";
+                //options.ClientId = "cas.mvc.client.implicit";
+                ////options.ClientSecret = "";
+                //options.ResponseType = "id_token token";
 
                 options.SaveTokens = true;
                 //设置从UserInfoEndpoint获取claims信息
                 options.GetClaimsFromUserInfoEndpoint = true;
+
                 ////获取后映射到claims
                 //options.ClaimActions.MapJsonKey("sub", "sub");
                 //options.ClaimActions.MapJsonKey("preferred_username", "preferred_username");
                 //options.ClaimActions.MapJsonKey("avatar", "avatar");
                 //options.ClaimActions.MapCustomJson("role", job => job["role"].ToString());
 
-                //options.Scope.Add("openid");
-                //options.Scope.Add("profile");
+                options.Scope.Add("openid");
+                options.Scope.Add("profile");
                 options.Scope.Add("productservice");
+                /*刷新token，需要服务端开启allowoffline_access
+                 * http://localhost:5000/.well-known/openid-configuration
+                 * https://localhost:44365/connect/token
+                 * grant_type:refresh_token
+                 * client_Id:cas.mvc.client.implicit
+                 * client_secret:clientsecret
+                 * refresh_token:***
+                 */
+                options.Scope.Add("offline_access");
+
                 //options.Events.OnTokenValidated =async tokenValidContext => {
                 //    var OUser = tokenValidContext.HttpContext.User;
                 //};

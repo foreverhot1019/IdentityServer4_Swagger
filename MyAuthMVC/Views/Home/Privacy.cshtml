@@ -7,20 +7,25 @@
 <p>Use this page to detail your site's privacy policy.</p>
 @if (User.Identity.IsAuthenticated)
 {
-    <span>id_Token:</span>
+    <strong>id_Token:</strong>
     <br />
     @await ViewContext.HttpContext.GetTokenAsync("id_token");
     <br />
-    <span>access_Token:</span>
+    <strong>access_Token:</strong>
     <br />
     @await ViewContext.HttpContext.GetTokenAsync("access_token");
     <br />
-    <span>Claims:</span>
+    <strong>refresh_token</strong>
+    <br />
+    <span>@await ViewContext.HttpContext.GetTokenAsync("refresh_token")</span>
+    <br />
+    <strong>Claims:</strong>
     <br />
     @foreach (var claim in User.Claims)
     {
         <span>@claim.Type:</span>
-        <span>@claim.Value</span><br />
+        <span>@claim.Value</span>
+        <br />
     }
     <br />
 }

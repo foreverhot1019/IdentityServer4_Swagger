@@ -111,36 +111,36 @@ namespace MyIdentityServer
             //    Configuration["Certificates:Password"]))
             #region 已扩展到数据库中可动态管理（AddConfigurationStore）
 
-            .AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
-            .AddInMemoryApiResources(InMemoryConfiguration.GetApiResources())
-            .AddInMemoryClients(InMemoryConfiguration.GetClients())
+            //.AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
+            //.AddInMemoryApiResources(InMemoryConfiguration.GetApiResources())
+            //.AddInMemoryClients(InMemoryConfiguration.GetClients())
 
             #endregion
-            //// this adds the config data from DB (clients, resources, CORS)
-            //.AddConfigurationStore(options =>
-            //{
-            //    options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
-            //    {
-            //        //MigrationsAssembly程序集必须设置一致
-            //        //dotnet ef migrations add InitConfigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/Configuration
-            //        opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
-            //    });
-            //    options.DefaultSchema = "";
-            //})
-            //// this adds the operational data from DB (codes, tokens, consents)
-            //.AddOperationalStore(options =>
-            //{
-            //    options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
-            //    {
-            //        //MigrationsAssembly程序集必须设置一致
-            //        //dotnet ef migrations add InitPersistedGrant -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrant
-            //        opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
-            //    });
-            //    options.DefaultSchema = "";
-            //    // this enables automatic token cleanup. this is optional.
-            //    options.EnableTokenCleanup = true;
-            //    options.TokenCleanupInterval = 30; // interval in seconds, short for testing
-            //})
+            // this adds the config data from DB (clients, resources, CORS)
+            .AddConfigurationStore(options =>
+            {
+                options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
+                {
+                    //MigrationsAssembly程序集必须设置一致
+                    //dotnet ef migrations add InitConfigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/Configuration
+                    opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
+                });
+                options.DefaultSchema = "";
+            })
+            // this adds the operational data from DB (codes, tokens, consents)
+            .AddOperationalStore(options =>
+            {
+                options.ConfigureDbContext = builder => builder.UseSqlServer(DbContextConnStr, opts =>
+                {
+                    //MigrationsAssembly程序集必须设置一致
+                    //dotnet ef migrations add InitPersistedGrant -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrant
+                    opts.MigrationsAssembly(migrationsAssembly);//"MyIdentityServer"
+                });
+                options.DefaultSchema = "";
+                // this enables automatic token cleanup. this is optional.
+                options.EnableTokenCleanup = true;
+                options.TokenCleanupInterval = 30; // interval in seconds, short for testing
+            })
             //.AddProfileService<MyProfileServices>()//自定义 用户权限页信息 这样无效 必须replace掉 Services中服务
             //.AddResourceOwnerValidator<ResourceOwnerPasswordExt>()//自定义资源所有者密码模式认证
             //.AddExtensionGrantValidator<MyGrantTypeValidator>()//自定义GrantType
@@ -156,8 +156,8 @@ namespace MyIdentityServer
             ////自定义 Api资源密钥验证
             //services.AddTransient<IApiSecretValidator, MyApiSecretValidatorExt>();
 
-            services.AddTransient<IProfileService, MyProfileServices>();
-            services.AddTransient<IResourceOwnerPasswordValidator, ResourceOwnerPasswordExt>();
+            services.AddTransient<IProfileService, MyProfileServices>();//自定义 用户权限页信息 
+            services.AddTransient<IResourceOwnerPasswordValidator, ResourceOwnerPasswordExt>();//自定义资源所有者密码模式认证
 
             //防止CSRF攻击
             services.AddAntiforgery(opts => {
