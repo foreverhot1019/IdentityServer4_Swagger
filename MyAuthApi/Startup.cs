@@ -42,9 +42,8 @@ namespace MyAuthApi
             services.AddAuthentication(Configuration["IdentitySrvAuth:Scheme"])
             .AddIdentityServerAuthentication(opts =>//IdentityServer认证方式配置
             {
-                opts.ApiName = "MichaelApi";
-                //opts.ApiName = Configuration["Service:Name"]; // match with configuration in IdentityServer
-                opts.RequireHttpsMetadata = false;// for dev env
+                //opts.ApiName = "productservice";//增加这个 会验证与IdentityServer4 JWT-AccessToken中的aud 是否一致
+                opts.RequireHttpsMetadata = true;// for dev env
                 opts.Authority = $"https://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port_ssl"]}";
                 //认证过期时间验证间隔时间
                 opts.JwtValidationClockSkew = TimeSpan.FromSeconds(10);
@@ -136,28 +135,7 @@ namespace MyAuthApi
                 //如果需要显示控制器注释只需将第二个参数设置为true
                 SwaggerGenOpts.IncludeXmlComments(xmlPath, true);
 
-                #region 全局Bearer Token认证 设置
-
-                //// Add security definitions-Swagger增加令牌获取
-                //SwaggerGenOpts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                //{
-                //    Description = "Please enter into field the word 'Bearer' followed by a space and the JWT value",
-                //    Name = "Authorization",
-                //    In = ParameterLocation.Header,
-                //    Type = SecuritySchemeType.ApiKey,
-                //});
-                //// 增加一个全局的安全必须
-                //SwaggerGenOpts.AddSecurityRequirement(new OpenApiSecurityRequirement
-                //{
-                //    { new OpenApiSecurityScheme
-                //    {
-                //        Reference = new OpenApiReference()
-                //        {
-                //            Id = "Bearer",
-                //            Type = ReferenceType.SecurityScheme
-                //        }
-                //    }, Array.Empty<string>() }
-                //});
+                #region 增加 全局 http-Header-Authorization=Bearer Token 设置
 
                 // Add security definitions-Swagger增加令牌获取
                 SwaggerGenOpts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
@@ -170,46 +148,57 @@ namespace MyAuthApi
                 // 增加一个全局的安全必须
                 SwaggerGenOpts.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    { new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference()
+                    { 
+                        new OpenApiSecurityScheme
                         {
-                            Id = "Bearer",
-                            Type = ReferenceType.SecurityScheme
-                        }
-                    }, Array.Empty<string>() }
+                            Reference = new OpenApiReference()
+                            {
+                                Id = "Bearer",
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        }, 
+                        Array.Empty<string>()
+                    }
                 });
 
-                //Swagger增加令牌获取
-                //SwaggerGenOpts.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
-                //{
-                //    Flow = "implicit", // 只需通过浏览器获取令牌（适用于swagger）
-                //    AuthorizationUrl = "http://localhost:5000/connect/authorize",//获取登录授权接口
-                //    Scopes = new Dictionary<string, string> {
-                //        { "demo_api", "Demo API - full access" }//指定客户端请求的api作用域。 如果为空，则客户端无法访问
-                //    }
-                //});                
+                #endregion
+
+                #region 增加一个 全局获取oauth2-token 设置
+                // app.UseSwaggerUI 设置 client_Id&client_secret
 
                 //Swagger增加令牌获取
                 SwaggerGenOpts.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
+                    Type = SecuritySchemeType.OAuth2,
                     Flows = new OpenApiOAuthFlows
                     {
                         ClientCredentials = new OpenApiOAuthFlow
                         {
-                            //AuthorizationUrl code和implicit 模式
-                            AuthorizationUrl = new Uri("https://localhost:44365/connect/token"),//获取登录授权接口
+                            //AuthorizationUrl code和implicit 模式-获取登录授权界面
+                            TokenUrl = new Uri("https://localhost:44365/connect/token", UriKind.Absolute),//获取登录授权接口
                             Scopes = new Dictionary<string, string> { { "clientservice", "client_service" } },//指定客户端请求的api作用域。 如果为空，则客户端无法访问
                         }
                     },
                     In = ParameterLocation.Query
                 });
-
-                //添加httpHeader参数
-                SwaggerGenOpts.OperationFilter<HttpHeaderOperation>();
-                SwaggerGenOpts.OperationFilter<HttpHeaderOperation>();
+                // 增加一个全局的安全必须
+                SwaggerGenOpts.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+                        },
+                        new[] { "clientservice" }
+                    }
+                });
 
                 #endregion
+
+                //添加httpHeader参数 报 Required field is not provided
+                //SwaggerGenOpts.OperationFilter<HttpHeaderOperation>();
+                //
+                //SwaggerGenOpts.OperationFilter<AuthResponsesOperationFilter>();
 
                 #region 多个Swagger https://www.cnblogs.com/weihanli/p/ues-swagger-in-aspnetcore3_0.html
 
@@ -261,6 +250,17 @@ namespace MyAuthApi
             app.UseSwaggerUI(opts =>
             {
                 opts.SwaggerEndpoint("/Swagger/v1/swagger.json", "ApiHelper V1");
+                #region OAuth 配置
+
+                //opts.OAuthAppName("ClientsService-OAuthAppName");//名称
+                //opts.OAuthClientId("product.api.service");
+                //opts.OAuthClientSecret("productsecret");
+                ////opts.OAuth2RedirectUrl//跳转地址code和implicit 模式-用到
+                ////opts.OAuthAdditionalQueryStringParams//额外参数
+                ////opts.OAuthUseBasicAuthenticationWithAccessCodeGrant();
+                ////opts.OAuthRealm//OAuth1  额外参数 增加到 AuthorizationUrl&TokenUrl
+
+                #endregion
             });
 
             #endregion

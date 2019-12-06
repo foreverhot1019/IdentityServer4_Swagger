@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -45,28 +46,25 @@ namespace MyAuthApi
 
             if ((isAuthorized && !allowAnonymous) || (isAuthorizedAct && !isAllowAnonymousAct))
             {
-                operation.Parameters.Add(new OpenApiParameter
-                {
+                operation.Parameters.Add(new OpenApiParameter{
                     Name = "Authorization",  //添加Authorization头部参数
                     In = ParameterLocation.Header,
+                    Description = "Bearer Access Token",
                     Required = true,
-                    Style = ParameterStyle.Simple
-                });
-                operation.Security = new List<OpenApiSecurityRequirement> {
-                    new OpenApiSecurityRequirement
+                    Style = ParameterStyle.Simple,
+                    Schema = new OpenApiSchema
                     {
-                        {
-                            new OpenApiSecurityScheme
-                            {
-                                Name="Bearer",
-                                Reference = new OpenApiReference()
-                                {
-                                    Id = "Bearer",
-                                    Type = ReferenceType.SecurityScheme
-                                }
-                            }, new List<string> { "swagger_api" } }
-                    }
-                };
+                        Type = "String",
+                        Default = new OpenApiString("Bearer "),
+                        //Properties ={
+                        //    ["token"] = new OpenApiSchema()
+                        //    {
+                        //        Description = "设置一个Bearer access_token",
+                        //        Type = "string"
+                        //    }
+                        //},
+                    },
+                });
             }
         }
     }
@@ -99,7 +97,8 @@ namespace MyAuthApi
                                     Id = "oauth2",
                                     Type = ReferenceType.SecurityScheme
                                 }
-                            }, new List<string> { "swagger_api" } }
+                            }, new List<string> { "clientservice" } 
+                        }
                     }
                 };
             };

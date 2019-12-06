@@ -61,7 +61,7 @@ namespace MyIdentityServer.IdentityServer
                     ClientSecrets = new [] { new Secret("clientsecret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
                     AllowedScopes = new [] {
-                        IdentityServerConstants.StandardScopes.Profile,//必须有
+                        IdentityServerConstants.StandardScopes.Profile,//必须有 否则获取不了 Profile-扩展的claims
                         "MichaelApi" },
                     AlwaysSendClientClaims = true,
                     AllowAccessTokensViaBrowser = true,
@@ -77,13 +77,14 @@ namespace MyIdentityServer.IdentityServer
                     ClientSecrets = new [] { new Secret("productsecret".Sha256()) },
                     AllowedGrantTypes = GrantTypes.ClientCredentials,//可以多个GrantType-GrantTypes.ResourceOwnerPasswordAndClientCredentials
                     AllowedScopes = new [] {
-                        IdentityServerConstants.StandardScopes.Profile,//必须有
+                        IdentityServerConstants.StandardScopes.Profile,//必须有 否则获取不了 Profile-扩展的claims
                         "clientservice", "productservice" },
                     AlwaysSendClientClaims = true,
                     AccessTokenLifetime = 30,//令牌过期时间（秒）
                     Claims = new Claim[]{ //默认带的Claims
                         new Claim(type:ClaimTypes.Role, value:"ApiRole", valueType:"IdsApiRole")
-                    }
+                    },
+                    AllowedCorsOrigins= new List<string>{ { "https://localhost:44367" } },
                 },
                 //自定义GrantType
                 new Client
