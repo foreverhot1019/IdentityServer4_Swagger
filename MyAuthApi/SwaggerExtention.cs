@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -24,31 +25,88 @@ namespace MyAuthApi
             {
                 operation.Parameters = new List<OpenApiParameter>();
             }
-
+            var filterPipeline = context.ApiDescription.ActionDescriptor.FilterDescriptors;
+            var isAuthorized = filterPipeline.Select(filterInfo => filterInfo.Filter).Any(filter => filter is AuthorizeFilter);
+            var allowAnonymous = filterPipeline.Select(filterInfo => filterInfo.Filter).Any(filter => filter is IAllowAnonymousFilter);
             //context.ApiDescription.TryGetMethodInfo(out System.Reflection.MethodInfo MInfo);
             //var isAuthorized = MInfo.GetCustomAttributes(typeof(AuthorizeAttribute),false);
 
             var actionAttrs = context.ApiDescription.CustomAttributes();
-            var isAuthorized = actionAttrs.Any(a => a.GetType() == typeof(AuthorizeAttribute));
+            var isAuthorizedAct = actionAttrs.Any(a => a.GetType() == typeof(AuthorizeAttribute));
 
-            if (isAuthorized== false) //提供action都没有权限特性标记，检查控制器有没有
+            if (isAuthorizedAct == false) //提供action都没有权限特性标记，检查控制器有没有
             {
                 var controllerAttrs = context.ApiDescription.CustomAttributes();
 
-                isAuthorized = controllerAttrs.Any(a => a.GetType() == typeof(AuthorizeAttribute));
+                isAuthorizedAct = controllerAttrs.Any(a => a.GetType() == typeof(AuthorizeAttribute));
             }
 
-            var isAllowAnonymous = actionAttrs.Any(a => a.GetType() == typeof(AllowAnonymousAttribute));
+            var isAllowAnonymousAct = actionAttrs.Any(a => a.GetType() == typeof(AllowAnonymousAttribute));
 
-            if (isAuthorized && isAllowAnonymous == false)
+            if ((isAuthorized && !allowAnonymous) || (isAuthorizedAct && !isAllowAnonymousAct))
             {
                 operation.Parameters.Add(new OpenApiParameter
                 {
                     Name = "Authorization",  //添加Authorization头部参数
                     In = ParameterLocation.Header,
-                    Required = true
+                    Required = true,
+                    Style = ParameterStyle.Simple
                 });
+                operation.Security = new List<OpenApiSecurityRequirement> {
+                    new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Name="Bearer",
+                                Reference = new OpenApiReference()
+                                {
+                                    Id = "Bearer",
+                                    Type = ReferenceType.SecurityScheme
+                                }
+                            }, new List<string> { "swagger_api" } }
+                    }
+                };
             }
+        }
+    }
+
+    /// <summary>
+    /// IdentityServer4
+    /// </summary>
+    public class AuthResponsesOperationFilter : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            //获取是否添加登录特性
+            var authAttributes = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
+             .Union(context.MethodInfo.GetCustomAttributes(true))
+             .OfType<AuthorizeAttribute>().Any();
+
+            if (authAttributes)
+            {
+                operation.Responses.Add("401", new OpenApiResponse { Description = "暂无访问权限" });
+                operation.Responses.Add("403", new OpenApiResponse { Description = "禁止访问" });
+                operation.Security = new List<OpenApiSecurityRequirement> {
+                    new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Name="oauth2",
+                                Reference = new OpenApiReference()
+                                {
+                                    Id = "oauth2",
+                                    Type = ReferenceType.SecurityScheme
+                                }
+                            }, new List<string> { "swagger_api" } }
+                    }
+                };
+            };
+            //operation.Security =  new List<IDictionary<string, IEnumerable<string>>>
+            //{
+            //    new Dictionary<string, IEnumerable<string>> {{"oauth2", new[] { "swagger_api" } }}
+            //};
         }
     }
 

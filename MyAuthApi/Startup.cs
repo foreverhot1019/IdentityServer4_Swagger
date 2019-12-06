@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
+using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -47,7 +48,7 @@ namespace MyAuthApi
                 opts.Authority = $"https://{Configuration["IdentitySrvAuth:IP"]}:{Configuration["IdentitySrvAuth:Port_ssl"]}";
                 //认证过期时间验证间隔时间
                 opts.JwtValidationClockSkew = TimeSpan.FromSeconds(10);
-                
+
                 opts.JwtBearerEvents = new JwtBearerEvents
                 {
                     //验证token是否符合自定义规范
@@ -71,7 +72,8 @@ namespace MyAuthApi
                     }
                 };
             })
-            .AddJwtBearer("MyJwtBearer",opts=> {
+            .AddJwtBearer("MyJwtBearer", opts =>
+            {
                 //认证过期时间间隔
                 opts.TokenValidationParameters.ClockSkew = TimeSpan.FromSeconds(10);
                 opts.Events = new JwtBearerEvents
@@ -98,7 +100,8 @@ namespace MyAuthApi
                 };
             });
             //授权配置
-            services.AddAuthorization(opts => {
+            services.AddAuthorization(opts =>
+            {
                 var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
                     JwtBearerDefaults.AuthenticationScheme,
                     "MyJwtBearer");
@@ -133,7 +136,28 @@ namespace MyAuthApi
                 //如果需要显示控制器注释只需将第二个参数设置为true
                 SwaggerGenOpts.IncludeXmlComments(xmlPath, true);
 
-                #region Bearer Token认证
+                #region 全局Bearer Token认证 设置
+
+                //// Add security definitions-Swagger增加令牌获取
+                //SwaggerGenOpts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                //{
+                //    Description = "Please enter into field the word 'Bearer' followed by a space and the JWT value",
+                //    Name = "Authorization",
+                //    In = ParameterLocation.Header,
+                //    Type = SecuritySchemeType.ApiKey,
+                //});
+                //// 增加一个全局的安全必须
+                //SwaggerGenOpts.AddSecurityRequirement(new OpenApiSecurityRequirement
+                //{
+                //    { new OpenApiSecurityScheme
+                //    {
+                //        Reference = new OpenApiReference()
+                //        {
+                //            Id = "Bearer",
+                //            Type = ReferenceType.SecurityScheme
+                //        }
+                //    }, Array.Empty<string>() }
+                //});
 
                 // Add security definitions-Swagger增加令牌获取
                 SwaggerGenOpts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
@@ -156,17 +180,33 @@ namespace MyAuthApi
                     }, Array.Empty<string>() }
                 });
 
-                ////Swagger增加令牌获取
-                //SwaggerGenOpts.AddSecurityDefinition("oauth2", new OAuth2Scheme
+                //Swagger增加令牌获取
+                //SwaggerGenOpts.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 //{
                 //    Flow = "implicit", // 只需通过浏览器获取令牌（适用于swagger）
                 //    AuthorizationUrl = "http://localhost:5000/connect/authorize",//获取登录授权接口
                 //    Scopes = new Dictionary<string, string> {
                 //        { "demo_api", "Demo API - full access" }//指定客户端请求的api作用域。 如果为空，则客户端无法访问
                 //    }
-                //});
+                //});                
+
+                //Swagger增加令牌获取
+                SwaggerGenOpts.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        ClientCredentials = new OpenApiOAuthFlow
+                        {
+                            //AuthorizationUrl code和implicit 模式
+                            AuthorizationUrl = new Uri("https://localhost:44365/connect/token"),//获取登录授权接口
+                            Scopes = new Dictionary<string, string> { { "clientservice", "client_service" } },//指定客户端请求的api作用域。 如果为空，则客户端无法访问
+                        }
+                    },
+                    In = ParameterLocation.Query
+                });
 
                 //添加httpHeader参数
+                SwaggerGenOpts.OperationFilter<HttpHeaderOperation>();
                 SwaggerGenOpts.OperationFilter<HttpHeaderOperation>();
 
                 #endregion

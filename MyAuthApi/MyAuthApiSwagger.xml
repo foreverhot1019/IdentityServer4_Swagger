@@ -90,5 +90,10 @@
             Swagger 扩展Authorize
             </summary>
         </member>
+        <member name="T:MyAuthApi.AuthResponsesOperationFilter">
+            <summary>
+            IdentityServer4
+            </summary>
+        </member>
     </members>
 </doc>
