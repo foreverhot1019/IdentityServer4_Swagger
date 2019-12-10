@@ -15,20 +15,30 @@ namespace MyIdentityServer
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var env = CreateHostBuilder(args);
+            var host = env.Build();
+            host.Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    string EnvName = "MichaelAuthServ";
-                    webBuilder.UseEnvironment(EnvName);
-                    //自定义配置文件
-                    IConfigurationRoot configuration = new ConfigurationBuilder()
+                    //string EnvName = "MichaelAuthServ";
+                    //var webHostbuilder = webBuilder.UseEnvironment(EnvName);
+                    var ConfigBuilder = new ConfigurationBuilder()
                       .SetBasePath(Directory.GetCurrentDirectory())
                       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                      .AddJsonFile($"appsettings.{EnvName}.json", optional: true).Build();
+                      //.AddJsonFile($"appsettings.{EnvName}.json", optional: true)
+                      .AddEnvironmentVariables();
+                    /*
+                     * 用户敏感数据设置（数据库连接/外部App的client_secrets）
+                     * 项目->右击->管理用户机密
+                     * https://docs.microsoft.com/zh-cn/aspnet/core/security/app-secrets?view=aspnetcore-3.0&tabs=windows
+                     */
+                    ConfigBuilder.AddUserSecrets<Startup>(); 
+                    //自定义配置文件
+                    var configuration = ConfigBuilder.Build();
 
                     int Port_ssl = configuration.GetValue<int>("WebHost:Port_ssl");
                     int Port = configuration.GetValue<int>("WebHost:Port");

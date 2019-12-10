@@ -24,9 +24,20 @@ namespace MyIdentityServer
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+
+            //var ConfigBuilder = new ConfigurationBuilder()
+            //          .SetBasePath(env.ContentRootPath)
+            //          .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            //          .AddEnvironmentVariables();
+            //if (env.IsDevelopment())
+            //{
+            //    ConfigBuilder.AddUserSecrets<Startup>();
+            //}
+
+            //Configuration = ConfigBuilder.Build();
         }
 
         public IConfiguration Configuration { get; }
@@ -34,15 +45,21 @@ namespace MyIdentityServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //自定义 数据保护密钥（类似于FrameWork 中MachineKey）
+            //services.AddDataProtection()
+            //    .SetApplicationName("my-app")
+            //    .PersistKeysToFileSystem(new DirectoryInfo(@"\\server\share\myapp-keys\"))//密钥路径
+            //    .ProtectKeysWithCertificate("thumbprint");
+
             InMemoryConfiguration.Configuration = this.Configuration;
 
             var DbContextConnStr = Configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-
+            //DbContext设置
             services.AddDbContext<ApplicationDbContext>(options => {
                 options.UseSqlServer(DbContextConnStr, b => { b.MigrationsAssembly(migrationsAssembly); });
             });
-
+            //AspNet.Identity设置
             services.AddIdentity<ApplicationUser, IdentityRole>(IdentityOpts =>
             {
                 // Password settings.
@@ -67,10 +84,9 @@ namespace MyIdentityServer
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-            //services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, CustomUserClaimsFactory<IdentityRole>>();
-
             services.AddControllersWithViews();
             services.AddRazorPages();
+            //增加Razor路由公约
             //services.AddRazorPages(o => o.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model => { 
             //    foreach (var selector in model.Selectors) 
             //    { 
