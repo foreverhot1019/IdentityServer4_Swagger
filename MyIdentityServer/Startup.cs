@@ -19,6 +19,8 @@ using IdentityServer4.EntityFramework.Mappers;
 using MyIdentityServer.Models;
 using IdentityServer4.Services;
 using IdentityServer4.AspNetIdentity;
+using System.Security.Cryptography.X509Certificates;
+using System.IO;
 
 namespace MyIdentityServer
 {
@@ -45,11 +47,16 @@ namespace MyIdentityServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //自定义 数据保护密钥（类似于FrameWork 中MachineKey）
+            /*
+             * https://docs.microsoft.com/zh-cn/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-3.0
+             * 自定义 数据保护密钥（类似于FrameWork 中MachineKey）
+             * 应用之间共享受保护的负载SetApplicationName
+             */
             //services.AddDataProtection()
             //    .SetApplicationName("my-app")
             //    .PersistKeysToFileSystem(new DirectoryInfo(@"\\server\share\myapp-keys\"))//密钥路径
             //    .ProtectKeysWithCertificate("thumbprint");
+            ////    .ProtectKeysWithCertificate(new X509Certificate2("certificate.pfx", "password"));
 
             InMemoryConfiguration.Configuration = this.Configuration;
 
@@ -106,6 +113,12 @@ namespace MyIdentityServer
             //http://localhost:5000/.well-known/openid-configuration
             services.AddIdentityServer(options =>
             {
+                //scope（授权范围）：服务包含在 scope 内，生成的access_token，才能访问本服务。
+                //lifetime（生命周期）：过期的access_token，无效访问。
+                //client ID(client_id)：不同的客户端 ID，生成不同对应的access_token。
+                //issuer name(iss)：翻译过来“发行者名称”，类似于主机名。
+                //RSA 加密证书（补充）：不同的加密证书，生成不同对应的access_token。
+                options.IssuerUri = "https://172.20.60.181:8013"; //slb 地址
                 options.UserInteraction = new IdentityServer4.Configuration.UserInteractionOptions
                 {
                     LoginUrl = "/Account/Login",//【必备】登录地址  
@@ -120,11 +133,12 @@ namespace MyIdentityServer
                     CookieMessageThreshold = 5, //【必备】由于浏览器对Cookie的大小有限制，设置Cookies数量的限制，有效的保证了浏览器打开多个选项卡，一旦超出了Cookies限制就会清除以前的Cookies值
                 };
             })
-            .AddDeveloperSigningCredential(filename: "tempkey.rsa")//开发环境证书
+            //开发环境证书
+            //.AddDeveloperSigningCredential(filename: "tempkey.rsa")
             //自定义证书
-            //.AddSigningCredential(new X509Certificate2(Path.Combine(basePath,
-            //    Configuration["Certificates:CerPath"]),
-            //    Configuration["Certificates:Password"]))
+            .AddSigningCredential(new X509Certificate2(Path.Combine(Directory.GetCurrentDirectory(),
+                Configuration["Certificates:CerPath"]),
+                Configuration["Certificates:Password"]))
             #region 已扩展到数据库中可动态管理（AddConfigurationStore）
 
             //.AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
