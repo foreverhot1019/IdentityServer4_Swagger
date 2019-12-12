@@ -35,7 +35,10 @@ namespace MyAuthApi
 
                     webBuilder.UseKestrel(opts=> {
                         opts.ListenAnyIP(Port_ssl, opts => {
-                            opts.UseHttps();
+                            var CerPath = Path.Combine(Directory.GetCurrentDirectory(), configuration["Certificates:CerPath"]);
+                            //OpenSSL-Win64 生成证书
+                            var X509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(CerPath, configuration["Certificates:Password"]);
+                            opts.UseHttps(X509Certificate);
                         });
                         opts.ListenAnyIP(Port);
                     }).UseStartup<Startup>().UseUrls($"https://localhost:{Port_ssl},http://localhost:{Port}");

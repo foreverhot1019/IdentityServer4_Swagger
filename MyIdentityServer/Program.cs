@@ -45,7 +45,9 @@ namespace MyIdentityServer
                     //必须是https 不然IdentityServer4 会报User is not Authorized
                     webBuilder.UseKestrel(opts =>
                     {
-                        var X509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(Path.Combine(Directory.GetCurrentDirectory(), "certificate/MyIdentityServer4.pfx", "Michael"));
+                        var CerPath = Path.Combine(Directory.GetCurrentDirectory(), configuration["Certificates:CerPath"]);
+                        //OpenSSL-Win64 生成证书
+                        var X509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(CerPath, configuration["Certificates:Password"]);
                         opts.ListenAnyIP(Port_ssl, opts =>
                         {
                             opts.UseHttps(X509Certificate);

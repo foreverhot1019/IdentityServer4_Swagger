@@ -109,6 +109,7 @@ namespace MyIdentityServer
             //services.AddAuthorization();
 
 
+            var CerPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
             //认证服务器
             //http://localhost:5000/.well-known/openid-configuration
             services.AddIdentityServer(options =>
@@ -135,10 +136,8 @@ namespace MyIdentityServer
             })
             //开发环境证书
             //.AddDeveloperSigningCredential(filename: "tempkey.rsa")
-            //自定义证书
-            .AddSigningCredential(new X509Certificate2(Path.Combine(Directory.GetCurrentDirectory(),
-                Configuration["Certificates:CerPath"]),
-                Configuration["Certificates:Password"]))
+            //自定义证书OpenSSL-Win64 生成证书
+            .AddSigningCredential(new X509Certificate2(CerPath,Configuration["Certificates:Password"]))
             #region 已扩展到数据库中可动态管理（AddConfigurationStore）
 
             //.AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
