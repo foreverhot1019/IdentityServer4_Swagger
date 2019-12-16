@@ -21,6 +21,7 @@ using IdentityServer4.Services;
 using IdentityServer4.AspNetIdentity;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace MyIdentityServer
 {
@@ -47,23 +48,29 @@ namespace MyIdentityServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var basePath = Directory.GetCurrentDirectory();//Path.GetDirectoryName(typeof(Program).Assembly.Location);//获取应用程序所在目录（绝对，不受工作目录影响，建议采用此方法获取路径）
+            //证书路径
+            var CerDirPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
+            var CerFilePath = Path.Combine(CerDirPath, Configuration["Certificates:CerFileName"]);
             /*
              * https://docs.microsoft.com/zh-cn/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-3.0
              * 自定义 数据保护密钥（类似于FrameWork 中MachineKey）
              * 应用之间共享受保护的负载SetApplicationName
              */
-            //services.AddDataProtection()
-            //    .SetApplicationName("my-app")
-            //    .PersistKeysToFileSystem(new DirectoryInfo(@"\\server\share\myapp-keys\"))//密钥路径
-            //    .ProtectKeysWithCertificate("thumbprint");
-            ////    .ProtectKeysWithCertificate(new X509Certificate2("certificate.pfx", "password"));
+            services.AddDataProtection()
+                //.SetApplicationName("my-app")
+                //密钥路径
+                .PersistKeysToFileSystem(new DirectoryInfo(CerDirPath))
+                //.ProtectKeysWithCertificate("thumbprint");
+                .ProtectKeysWithCertificate(new X509Certificate2(CerFilePath, Configuration["Certificates:Password"]));
 
             InMemoryConfiguration.Configuration = this.Configuration;
 
             var DbContextConnStr = Configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             //DbContext设置
-            services.AddDbContext<ApplicationDbContext>(options => {
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
                 options.UseSqlServer(DbContextConnStr, b => { b.MigrationsAssembly(migrationsAssembly); });
             });
             //AspNet.Identity设置
@@ -108,8 +115,6 @@ namespace MyIdentityServer
             ////授权（访问Action时验证令牌包含的Claims的权限）
             //services.AddAuthorization();
 
-
-            var CerPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
             //认证服务器
             //http://localhost:5000/.well-known/openid-configuration
             services.AddIdentityServer(options =>
@@ -137,7 +142,7 @@ namespace MyIdentityServer
             //开发环境证书
             //.AddDeveloperSigningCredential(filename: "tempkey.rsa")
             //自定义证书OpenSSL-Win64 生成证书
-            .AddSigningCredential(new X509Certificate2(CerPath,Configuration["Certificates:Password"]))
+            .AddSigningCredential(new X509Certificate2(CerFilePath, Configuration["Certificates:Password"]))
             #region 已扩展到数据库中可动态管理（AddConfigurationStore）
 
             //.AddInMemoryIdentityResources(InMemoryConfiguration.GetIdentityResources())
@@ -189,7 +194,8 @@ namespace MyIdentityServer
             services.AddTransient<IResourceOwnerPasswordValidator, ResourceOwnerPasswordExt>();//自定义资源所有者密码模式认证
 
             //防止CSRF攻击
-            services.AddAntiforgery(opts => {
+            services.AddAntiforgery(opts =>
+            {
                 opts.HeaderName = "MichaelAntiforgery";
                 //opts.SuppressXFrameOptionsHeader
             });

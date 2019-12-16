@@ -35,9 +35,12 @@ namespace MyAuthApi
 
                     webBuilder.UseKestrel(opts=> {
                         opts.ListenAnyIP(Port_ssl, opts => {
-                            var CerPath = Path.Combine(Directory.GetCurrentDirectory(), configuration["Certificates:CerPath"]);
+                            var basePath = Directory.GetCurrentDirectory();//Path.GetDirectoryName(typeof(Program).Assembly.Location);//获取应用程序所在目录（绝对，不受工作目录影响，建议采用此方法获取路径）
+                            //证书路径
+                            var CerDirPath = Path.Combine(Directory.GetCurrentDirectory(), configuration["Certificates:CerPath"]);
+                            var CerFilePath = Path.Combine(CerDirPath, configuration["Certificates:CerFileName"]);
                             //OpenSSL-Win64 生成证书
-                            var X509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(CerPath, configuration["Certificates:Password"]);
+                            var X509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(CerFilePath, configuration["Certificates:Password"]);
                             opts.UseHttps(X509Certificate);
                         });
                         opts.ListenAnyIP(Port);

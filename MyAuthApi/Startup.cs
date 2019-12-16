@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
@@ -37,7 +39,26 @@ namespace MyAuthApi
             //services.AddControllersWithViews(); // MVC
             //services.AddRazorPages(); // RazorPage
 
-            //IdentityModelEventSource.ShowPII = true;//显示IdentityServer具体错误
+            var basePath = Directory.GetCurrentDirectory();//Path.GetDirectoryName(typeof(Program).Assembly.Location);//获取应用程序所在目录（绝对，不受工作目录影响，建议采用此方法获取路径）
+            //证书路径
+            var CerDirPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
+            var CerFilePath = Path.Combine(CerDirPath, Configuration["Certificates:CerFileName"]);
+            /*
+             * https://docs.microsoft.com/zh-cn/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-3.0
+             * 自定义 数据保护密钥（类似于FrameWork 中MachineKey）
+             * 应用之间共享受保护的负载SetApplicationName
+             */
+            if (!string.IsNullOrEmpty(Configuration["Certificates:Start"] ?? ""))
+            {
+                services.AddDataProtection()
+                    //.SetApplicationName("my-app")
+                    //密钥路径
+                    .PersistKeysToFileSystem(new DirectoryInfo(CerDirPath))
+                    //.ProtectKeysWithCertificate("thumbprint");
+                    .ProtectKeysWithCertificate(new X509Certificate2(CerFilePath, Configuration["Certificates:Password"]));
+            }
+
+            IdentityModelEventSource.ShowPII = true;//显示IdentityServer具体错误
             //认证方式配置
             services.AddAuthentication(Configuration["IdentitySrvAuth:Scheme"])
             .AddIdentityServerAuthentication(opts =>//IdentityServer认证方式配置
@@ -148,7 +169,7 @@ namespace MyAuthApi
                 // 增加一个全局的安全必须
                 SwaggerGenOpts.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    { 
+                    {
                         new OpenApiSecurityScheme
                         {
                             Reference = new OpenApiReference()
@@ -156,7 +177,7 @@ namespace MyAuthApi
                                 Id = "Bearer",
                                 Type = ReferenceType.SecurityScheme
                             }
-                        }, 
+                        },
                         Array.Empty<string>()
                     }
                 });
