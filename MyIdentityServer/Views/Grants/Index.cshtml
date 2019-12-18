@@ -1,4 +1,6 @@
 ﻿@model GrantsViewModel
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 
 <div class="grants">
     <div class="row page-header">
@@ -7,6 +9,7 @@
                 Client Application Access
             </h1>
             <div>Below is the list of applications you have given access to and the names of the resources they have access to.</div>
+            @HttpContextAccessor.HttpContext.Session.GetString("Michael")
         </div>
     </div>
 
@@ -48,7 +51,7 @@
                             <div class="granttype">Identity Grants</div>
                             <ul>
                                 @foreach (var name in grant.IdentityGrantNames)
-                        {
+                                {
                                     <li>@name</li>
                                 }
                             </ul>

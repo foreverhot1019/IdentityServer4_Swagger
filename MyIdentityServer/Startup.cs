@@ -23,6 +23,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using Microsoft.AspNetCore.DataProtection;
 using MyIdentityServer.DataProtection;
+using StackExchange.Redis;
 
 namespace MyIdentityServer
 {
@@ -49,12 +50,24 @@ namespace MyIdentityServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //当前程序集名称
+            var CurrentAssemblyName = Assembly.GetExecutingAssembly().FullName;
+            var AppName = Configuration["AppName"]?? "My-App";
+            //redis 链接字符串
+            var redisConnStr = Configuration.GetConnectionString("RedisConnection"); 
+            var redis = ConnectionMultiplexer.Connect(redisConnStr);//建立Redis 连接
+            //Session过期时间
+            var SessionExpired = Configuration.GetValue<int?>("Session:Expired") ??180;
+            var SessionName = Configuration.GetValue<string>("Session:Name") ?? "MySession";
+
             var basePath = Directory.GetCurrentDirectory();//Path.GetDirectoryName(typeof(Program).Assembly.Location);//获取应用程序所在目录（绝对，不受工作目录影响，建议采用此方法获取路径）
             //证书路径
             var CerDirPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
             var CerFilePath = Path.Combine(CerDirPath, Configuration["Certificates:CerFileName"]);
             var DataProtection = Configuration["DataProtection:DirPath"] ?? "";
             Console.WriteLine(DataProtection);
+            //集群
+            var Cluster = Configuration.GetValue<bool>("Cluster");
             /*
              * %LocalAppData%\ASP.NET\DataProtection-Keys
              * %LocalAppData% = C:\Users\登录账户\AppData\Local
@@ -63,7 +76,7 @@ namespace MyIdentityServer
              * 自定义 数据保护密钥（类似于FrameWork 中MachineKey）
              * 应用之间共享受保护的负载SetApplicationName
              */
-            if (!string.IsNullOrEmpty(Configuration["Certificates:Start"] ?? ""))
+            if (Cluster)
             {
                 //var LOCALAPPDATA = Environment.GetEnvironmentVariable("LocalAppData");
                 //Console.WriteLine(LOCALAPPDATA);
@@ -71,11 +84,40 @@ namespace MyIdentityServer
                 //Console.WriteLine(FileDir);
                 #region 集群模式DataProtection
 
+                #region 本地文件密钥配置
+
+                //services.AddDataProtection()
+                //.SetApplicationName(AppName)
+                //.AddKeyManagementOptions(options =>
+                //{
+                //    options.XmlRepository = new XmlRepository(Configuration);
+                //});
+
+                #endregion
+
+                #endregion
+
+                #region Redis密钥配置&Session分布式
+
+                // DataProtection persist in redis
                 services.AddDataProtection()
-                .SetApplicationName("my-app")
-                .AddKeyManagementOptions(options =>
+                    .SetApplicationName(AppName)
+                    .PersistKeysToStackExchangeRedis(() => redis.GetDatabase(1), "DataProtection-Keys");
+
+                //添加Redis缓存用于分布式Session
+                services.AddStackExchangeRedisCache(options =>
                 {
-                    options.XmlRepository = new XmlRepository(Configuration);
+                    options.Configuration = redisConnStr;
+                    options.InstanceName = SessionName;//CurrentAssemblyName;
+                });
+
+                //添加Session
+                services.AddSession(options =>
+                {
+                    options.Cookie.Name = SessionName;
+                    options.IdleTimeout = TimeSpan.FromMinutes(SessionExpired);//设置session的过期时间
+                    options.Cookie.HttpOnly = true;//设置在浏览器不能通过js获得该cookie的值
+                    options.Cookie.IsEssential = true;
                 });
 
                 #endregion
@@ -84,6 +126,7 @@ namespace MyIdentityServer
             InMemoryConfiguration.Configuration = this.Configuration;
 
             var DbContextConnStr = Configuration.GetConnectionString("DefaultConnection");
+            //程序集名称
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             //DbContext设置
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -238,8 +281,10 @@ namespace MyIdentityServer
             //强制使用Https
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
-
+            //使用路由
             app.UseRouting();
+            //使用Session
+            app.UseSession();
 
             //认证方式
             //app.UseAuthentication();// UseAuthentication not needed -- UseIdentityServer add this
