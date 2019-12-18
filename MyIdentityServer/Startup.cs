@@ -66,7 +66,9 @@ namespace MyIdentityServer
             var CerFilePath = Path.Combine(CerDirPath, Configuration["Certificates:CerFileName"]);
             var DataProtection = Configuration["DataProtection:DirPath"] ?? "";
             Console.WriteLine(DataProtection);
-            //集群
+
+            #region 集群
+            
             var Cluster = Configuration.GetValue<bool>("Cluster");
             /*
              * %LocalAppData%\ASP.NET\DataProtection-Keys
@@ -122,6 +124,8 @@ namespace MyIdentityServer
 
                 #endregion
             }
+
+            #endregion
 
             InMemoryConfiguration.Configuration = this.Configuration;
 
