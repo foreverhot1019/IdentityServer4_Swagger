@@ -22,6 +22,7 @@ using IdentityServer4.AspNetIdentity;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using Microsoft.AspNetCore.DataProtection;
+using MyIdentityServer.DataProtection;
 
 namespace MyIdentityServer
 {
@@ -52,17 +53,33 @@ namespace MyIdentityServer
             //证书路径
             var CerDirPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
             var CerFilePath = Path.Combine(CerDirPath, Configuration["Certificates:CerFileName"]);
+            var DataProtection = Configuration["DataProtection:DirPath"] ?? "";
+            Console.WriteLine(DataProtection);
             /*
+             * %LocalAppData%\ASP.NET\DataProtection-Keys
+             * %LocalAppData% = C:\Users\登录账户\AppData\Local
+             * %AppData% = C:\Users\登录账户\AppData\Roaming
              * https://docs.microsoft.com/zh-cn/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-3.0
              * 自定义 数据保护密钥（类似于FrameWork 中MachineKey）
              * 应用之间共享受保护的负载SetApplicationName
              */
-            services.AddDataProtection()
-                //.SetApplicationName("my-app")
-                //密钥路径
-                .PersistKeysToFileSystem(new DirectoryInfo(CerDirPath))
-                //.ProtectKeysWithCertificate("thumbprint");
-                .ProtectKeysWithCertificate(new X509Certificate2(CerFilePath, Configuration["Certificates:Password"]));
+            if (!string.IsNullOrEmpty(Configuration["Certificates:Start"] ?? ""))
+            {
+                //var LOCALAPPDATA = Environment.GetEnvironmentVariable("LocalAppData");
+                //Console.WriteLine(LOCALAPPDATA);
+                //var FileDir = new DirectoryInfo(DataProtection.Replace("%LocalAppData%", LOCALAPPDATA));
+                //Console.WriteLine(FileDir);
+                #region 集群模式DataProtection
+
+                services.AddDataProtection()
+                .SetApplicationName("my-app")
+                .AddKeyManagementOptions(options =>
+                {
+                    options.XmlRepository = new XmlRepository(Configuration);
+                });
+
+                #endregion
+            }
 
             InMemoryConfiguration.Configuration = this.Configuration;
 

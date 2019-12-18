@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyAuthMVC", "MyAuthMVC\MyAu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Menu_Permission", "Menu_Permission\Menu_Permission.csproj", "{25BE3D00-8F27-45FA-88F9-4F98ED5DD8C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdsTest", "IdsTest\IdsTest.csproj", "{D5A860C2-72A0-4B5A-A751-E04AABD77193}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdsTest", "IdsTest\IdsTest.csproj", "{D5A860C2-72A0-4B5A-A751-E04AABD77193}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

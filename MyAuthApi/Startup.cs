@@ -44,6 +44,9 @@ namespace MyAuthApi
             var CerDirPath = Path.Combine(Directory.GetCurrentDirectory(), Configuration["Certificates:CerPath"]);
             var CerFilePath = Path.Combine(CerDirPath, Configuration["Certificates:CerFileName"]);
             /*
+             * %LocalAppData%\ASP.NET\DataProtection-Keys
+             * %LocalAppData% = C:\Users\登录账户\AppData\Local
+             * %AppData% = C:\Users\登录账户\AppData\Roaming
              * https://docs.microsoft.com/zh-cn/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-3.0
              * 自定义 数据保护密钥（类似于FrameWork 中MachineKey）
              * 应用之间共享受保护的负载SetApplicationName
@@ -51,7 +54,7 @@ namespace MyAuthApi
             if (!string.IsNullOrEmpty(Configuration["Certificates:Start"] ?? ""))
             {
                 services.AddDataProtection()
-                    //.SetApplicationName("my-app")
+                    .SetApplicationName("IdentityServerAuth")
                     //密钥路径
                     .PersistKeysToFileSystem(new DirectoryInfo(CerDirPath))
                     //.ProtectKeysWithCertificate("thumbprint");
